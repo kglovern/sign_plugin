@@ -14,3 +14,4 @@ yarn-error.log*
 /ui
 /dist
 .DS_Store
+/.idea/

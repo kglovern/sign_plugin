@@ -1,0 +1,34 @@
+{
+  "name": "simple-signs",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "gSender plugin for designing simple signs and generating GRBL G-code",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sienci/gsender-plugin-sdk": "^0.1.0",
+    "@sienci/gviewer": "^0.1.26",
+    "clipper-lib": "^6.4.2",
+    "opentype.js": "^2.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.168.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/clipper-lib": "^6.4.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.0",
+    "vitest": "^2.1.8"
+  }
+}

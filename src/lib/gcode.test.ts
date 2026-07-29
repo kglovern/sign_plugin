@@ -1,0 +1,187 @@
+import { describe, expect, it } from "vitest";
+
+import { generate } from "./generate";
+import { emitGcode, gcodeWordsUsed } from "./gcode";
+import { defaultProject, type Project } from "./project";
+
+/**
+ * Everything GRBL 1.1 parses that we intend to use. Anything outside this set
+ * risks an "unsupported command" alarm partway through a job.
+ */
+const ALLOWED_WORDS = new Set([
+	"G0",
+	"G1",
+	"G4",
+	"G17",
+	"G20",
+	"G21",
+	"G90",
+	"G94",
+	"M3",
+	"M5",
+	"M30",
+]);
+
+/** Blank profile only — no font is available in a node test run. */
+const profileProject = (overrides: Partial<Project> = {}): Project => ({
+	...defaultProject(),
+	...overrides,
+});
+
+const motionLines = (gcode: string): string[] =>
+	gcode
+		.split("\n")
+		.map((l) => l.trim())
+		.filter((l) => /^G[01]\b/.test(l));
+
+const axisValue = (line: string, axis: "X" | "Y" | "Z"): number | null => {
+	const match = line.match(new RegExp(`${axis}(-?\\d+(?:\\.\\d+)?)`));
+	return match ? Number(match[1]) : null;
+};
+
+describe("emitGcode", () => {
+	it("only uses commands GRBL supports", () => {
+		const { gcode } = generate(profileProject(), null);
+		for (const word of gcodeWordsUsed(gcode)) {
+			expect(ALLOWED_WORDS).toContain(word);
+		}
+	});
+
+	it("opens in metric absolute mode and shuts down cleanly", () => {
+		const { gcode } = generate(profileProject(), null);
+		const lines = gcode.split("\n").map((l) => l.trim());
+
+		expect(lines).toContain("G21");
+		expect(lines).toContain("G90");
+		expect(lines).toContain("G17");
+		expect(lines).toContain("G94");
+		expect(lines.filter(Boolean).at(-2)).toBe("M5");
+		expect(lines.filter(Boolean).at(-1)).toBe("M30");
+	});
+
+	it("starts the spindle before the first cutting move", () => {
+		const { gcode } = generate(profileProject(), null);
+		const lines = gcode.split("\n").map((l) => l.trim());
+		const spindle = lines.findIndex((l) => l.startsWith("M3 S"));
+		// \b so this does not match the G17 plane-select in the preamble.
+		const firstCut = lines.findIndex((l) => /^G1\b/.test(l));
+
+		expect(spindle).toBeGreaterThanOrEqual(0);
+		expect(firstCut).toBeGreaterThan(spindle);
+	});
+
+	it("sets a feedrate on or before the first cutting move", () => {
+		const { gcode } = generate(profileProject(), null);
+		const firstCut = motionLines(gcode).find((l) => l.startsWith("G1"));
+		expect(firstCut).toMatch(/F\d/);
+	});
+
+	it("never cuts deeper than the configured profile depth", () => {
+		const project = profileProject();
+		const { gcode } = generate(project, null);
+
+		for (const line of motionLines(gcode)) {
+			const z = axisValue(line, "Z");
+			if (z !== null) {
+				expect(z).toBeGreaterThanOrEqual(-project.blank.depth - 1e-6);
+			}
+		}
+	});
+
+	it("reaches full depth on the final pass", () => {
+		const project = profileProject();
+		const { toolpath } = generate(project, null);
+		expect(toolpath.minZ).toBeCloseTo(-project.blank.depth, 6);
+	});
+
+	it("descends monotonically through the depth passes", () => {
+		const project = profileProject();
+		const { toolpath } = generate(project, null);
+
+		// Deepest Z of each pass should never get shallower as passes proceed.
+		const depths = toolpath.passes.map((p) =>
+			Math.min(...p.moves.map((m) => m.z)),
+		);
+		for (let i = 1; i < depths.length; i += 1) {
+			expect(depths[i]).toBeLessThanOrEqual(depths[i - 1] + 1e-9);
+		}
+	});
+
+	it("emits inches when the workspace is imperial", () => {
+		const project = profileProject({ units: "in" });
+		const { gcode } = generate(project, null);
+		const lines = gcode.split("\n").map((l) => l.trim());
+
+		expect(lines).toContain("G20");
+		expect(lines).not.toContain("G21");
+
+		// A 150mm-wide blank is under 6in, so no X should exceed that.
+		for (const line of motionLines(gcode)) {
+			const x = axisValue(line, "X");
+			if (x !== null) expect(Math.abs(x)).toBeLessThan(6);
+		}
+	});
+
+	it("shifts coordinates when zeroed at the lower-left corner", () => {
+		const base = profileProject();
+		const centred = generate({ ...base, origin: "center" }, null);
+		const corner = generate({ ...base, origin: "lower-left" }, null);
+
+		const minX = (gcode: string) =>
+			Math.min(
+				...motionLines(gcode)
+					.map((l) => axisValue(l, "X"))
+					.filter((v): v is number => v !== null),
+			);
+
+		// The cutter rides one radius outside the blank edge, so the leftmost
+		// coordinate is the blank edge minus the tool radius in both cases —
+		// the two origins differ by exactly half the blank width.
+		const radius = base.tool.endmillDiameter / 2;
+		expect(minX(centred.gcode)).toBeCloseTo(-base.blank.width / 2 - radius, 2);
+		expect(minX(corner.gcode)).toBeCloseTo(-radius, 2);
+		expect(minX(corner.gcode) - minX(centred.gcode)).toBeCloseTo(
+			base.blank.width / 2,
+			2,
+		);
+	});
+
+	it("records the parameters in the header comments", () => {
+		const { gcode } = generate(profileProject(), null);
+		expect(gcode).toContain("(Generated by Simple Signs - gSender plugin)");
+		expect(gcode).toMatch(/\(Tool: endmill/);
+		expect(gcode).toMatch(/\(Tabs: 4 x/);
+	});
+
+	it("never emits unbalanced comment delimiters", () => {
+		const project = profileProject();
+		project.text.content = "Sign (with) parens";
+		const { gcode } = generate(project, null);
+
+		for (const line of gcode.split("\n")) {
+			const opens = (line.match(/\(/g) ?? []).length;
+			const closes = (line.match(/\)/g) ?? []).length;
+			expect(opens).toBe(closes);
+		}
+	});
+
+	it("produces nothing but a preamble when there is no geometry", () => {
+		const project = profileProject();
+		project.blank.cutProfile = false;
+		const { gcode, toolpath } = generate(project, null);
+
+		expect(toolpath.passes).toHaveLength(0);
+		expect(motionLines(gcode).filter((l) => l.startsWith("G1"))).toHaveLength(0);
+	});
+});
+
+describe("gcodeWordsUsed", () => {
+	it("ignores words that appear inside comments", () => {
+		const gcode = emitGcode(
+			{ passes: [], minZ: 0, warnings: ["contains G81 and M6 in prose"] },
+			defaultProject(),
+		);
+		expect(gcodeWordsUsed(gcode)).not.toContain("G81");
+		expect(gcodeWordsUsed(gcode)).not.toContain("M6");
+	});
+});

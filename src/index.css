@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* gSender renders plugins in an iframe sized by the host, so the app owns its
+   own scrolling rather than growing the frame. */
+html,
+body,
+#root {
+	height: 100%;
+}
+
+body {
+	margin: 0;
+	font-family:
+		system-ui,
+		-apple-system,
+		"Segoe UI",
+		sans-serif;
+}

@@ -30,6 +30,47 @@ type Props = {
 /** Trims float noise introduced by converting mm ↔ inches for display. */
 const clean = (value: number): number => Number(value.toFixed(4));
 
+/**
+ * A length field. The model is always millimetres; this converts to and from
+ * the workspace's display units so an inch user never sees a metric number.
+ *
+ * Defined at module scope (not inside `OptionsPanel`) so it keeps a stable
+ * component identity across renders — otherwise React would remount the
+ * underlying `<input>` on every keystroke and drop focus.
+ */
+const Length = ({
+	label,
+	value,
+	onChange,
+	units,
+	scale,
+	step,
+	min,
+	title,
+	disabled,
+}: {
+	label: string;
+	value: number;
+	onChange: (mm: number) => void;
+	units: Project["units"];
+	scale: number;
+	step: number;
+	min?: number;
+	title?: string;
+	disabled?: boolean;
+}) => (
+	<NumberField
+		label={label}
+		suffix={units}
+		value={clean(value / scale)}
+		step={step}
+		min={min}
+		title={title}
+		disabled={disabled}
+		onChange={(v) => onChange(v * scale)}
+	/>
+);
+
 const OptionsPanel = ({
 	project,
 	setProject,
@@ -56,39 +97,6 @@ const OptionsPanel = ({
 		setProject((p) => ({ ...p, tool: { ...p.tool, ...next } }));
 	const patchTabs = (next: Partial<Project["tabs"]>) =>
 		setProject((p) => ({ ...p, tabs: { ...p.tabs, ...next } }));
-
-	/**
-	 * A length field. The model is always millimetres; this converts to and from
-	 * the workspace's display units so an inch user never sees a metric number.
-	 */
-	const Length = ({
-		label,
-		value,
-		onChange,
-		step = lengthStep,
-		min,
-		title,
-		disabled,
-	}: {
-		label: string;
-		value: number;
-		onChange: (mm: number) => void;
-		step?: number;
-		min?: number;
-		title?: string;
-		disabled?: boolean;
-	}) => (
-		<NumberField
-			label={label}
-			suffix={units}
-			value={clean(value / scale)}
-			step={step}
-			min={min}
-			title={title}
-			disabled={disabled}
-			onChange={(v) => onChange(v * scale)}
-		/>
-	);
 
 	return (
 		<div>
@@ -128,12 +136,18 @@ const OptionsPanel = ({
 				<Row>
 					<Length
 						label="Width"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.blank.width}
 						min={0}
 						onChange={(width) => patchBlank({ width })}
 					/>
 					<Length
 						label="Height"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.blank.height}
 						min={0}
 						onChange={(height) => patchBlank({ height })}
@@ -142,6 +156,9 @@ const OptionsPanel = ({
 				{project.blank.shape === "rounded-rect" ? (
 					<Length
 						label="Corner radius"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.blank.cornerRadius}
 						min={0}
 						onChange={(cornerRadius) => patchBlank({ cornerRadius })}
@@ -150,12 +167,18 @@ const OptionsPanel = ({
 				<Row>
 					<Length
 						label="Stock thickness"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.blank.stockThickness}
 						min={0}
 						onChange={(stockThickness) => patchBlank({ stockThickness })}
 					/>
 					<Length
 						label="Profile depth"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.blank.depth}
 						min={0}
 						title="Cut a little past the stock thickness to guarantee a clean release."
@@ -187,6 +210,9 @@ const OptionsPanel = ({
 				<Row>
 					<Length
 						label="Size"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.text.size}
 						min={0}
 						onChange={(size) => patchText({ size })}
@@ -205,6 +231,8 @@ const OptionsPanel = ({
 				<Row>
 					<Length
 						label="Letter spacing"
+						units={units}
+						scale={scale}
 						value={project.text.letterSpacing}
 						step={fineStep}
 						onChange={(letterSpacing) => patchText({ letterSpacing })}
@@ -221,11 +249,17 @@ const OptionsPanel = ({
 				<Row>
 					<Length
 						label="X offset"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.text.x}
 						onChange={(x) => patchText({ x })}
 					/>
 					<Length
 						label="Y offset"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.text.y}
 						onChange={(y) => patchText({ y })}
 					/>
@@ -258,6 +292,9 @@ const OptionsPanel = ({
 					label={
 						project.text.strategy === "vcarve" ? "Max text depth" : "Text depth"
 					}
+					units={units}
+					scale={scale}
+					step={lengthStep}
 					value={project.text.depth}
 					min={0}
 					title={
@@ -290,6 +327,9 @@ const OptionsPanel = ({
 						/>
 						<Length
 							label="V-bit diameter"
+							units={units}
+							scale={scale}
+							step={lengthStep}
 							value={project.tool.vBitDiameter}
 							min={0}
 							title="Caps how deep the carve can go before the shank is cutting."
@@ -300,6 +340,8 @@ const OptionsPanel = ({
 				<Row>
 					<Length
 						label="Endmill diameter"
+						units={units}
+						scale={scale}
 						value={project.tool.endmillDiameter}
 						step={fineStep}
 						min={0}
@@ -308,6 +350,9 @@ const OptionsPanel = ({
 					/>
 					<Length
 						label="Safe Z"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.tool.safeZ}
 						min={0}
 						onChange={(safeZ) => patchTool({ safeZ })}
@@ -352,6 +397,9 @@ const OptionsPanel = ({
 				<Row>
 					<Length
 						label="Stepdown"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.tool.stepdown}
 						min={0.01}
 						title="Maximum depth of cut per pass."
@@ -360,6 +408,8 @@ const OptionsPanel = ({
 					{project.text.strategy === "vcarve" ? (
 						<Length
 							label="V-carve ring step"
+							units={units}
+							scale={scale}
 							value={project.tool.vcarveStepover}
 							step={fineStep}
 							min={0.01}
@@ -407,6 +457,9 @@ const OptionsPanel = ({
 							/>
 							<Length
 								label="Tab height"
+								units={units}
+								scale={scale}
+								step={lengthStep}
 								value={project.tabs.height}
 								min={0}
 								title="Measured up from the bottom of the profile cut."
@@ -415,6 +468,9 @@ const OptionsPanel = ({
 						</Row>
 						<Length
 							label="Tab length"
+							units={units}
+							scale={scale}
+							step={lengthStep}
 							value={project.tabs.length}
 							min={0}
 							onChange={(length) => patchTabs({ length })}
@@ -443,6 +499,9 @@ const OptionsPanel = ({
 				<Row>
 					<Length
 						label="Grid spacing"
+						units={units}
+						scale={scale}
+						step={lengthStep}
 						value={project.gridSpacing}
 						min={0.1}
 						onChange={(gridSpacing) => patch("gridSpacing", gridSpacing)}

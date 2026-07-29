@@ -138,7 +138,7 @@ export const defaultProject = (): Project => ({
 	text: {
 		content: "WELCOME",
 		fontKey: null,
-		size: 28,
+		size: 16,
 		letterSpacing: 0,
 		lineSpacing: 1.25,
 		align: "center",

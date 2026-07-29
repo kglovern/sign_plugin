@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 const inputClass =
 	"w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm " +
@@ -46,27 +46,48 @@ export const NumberField = ({
 	suffix?: string;
 	title?: string;
 	disabled?: boolean;
-}) => (
-	<label className="mb-2 flex flex-col gap-1 text-xs" title={title}>
-		<span className="text-gray-600 dark:text-gray-400">
-			{label}
-			{suffix ? <span className="text-gray-400"> ({suffix})</span> : null}
-		</span>
-		<input
-			type="number"
-			value={Number.isFinite(value) ? value : 0}
-			step={step}
-			min={min}
-			max={max}
-			disabled={disabled}
-			onChange={(e) => {
-				const next = e.target.valueAsNumber;
-				if (Number.isFinite(next)) onChange(next);
-			}}
-			className={`${inputClass} disabled:opacity-50`}
-		/>
-	</label>
-);
+}) => {
+	const committed = Number.isFinite(value) ? value : 0;
+	const [draft, setDraft] = useState(String(committed));
+
+	// Keep the draft in sync when the value changes for reasons other than
+	// this field's own edits (unit conversion, another control, undo, etc.).
+	useEffect(() => {
+		setDraft(String(committed));
+	}, [committed]);
+
+	const commit = () => {
+		const next = Number.parseFloat(draft);
+		if (Number.isFinite(next)) {
+			onChange(next);
+		} else {
+			setDraft(String(committed));
+		}
+	};
+
+	return (
+		<label className="mb-2 flex flex-col gap-1 text-xs" title={title}>
+			<span className="text-gray-600 dark:text-gray-400">
+				{label}
+				{suffix ? <span className="text-gray-400"> ({suffix})</span> : null}
+			</span>
+			<input
+				type="number"
+				value={draft}
+				step={step}
+				min={min}
+				max={max}
+				disabled={disabled}
+				onChange={(e) => setDraft(e.target.value)}
+				onBlur={commit}
+				onKeyDown={(e) => {
+					if (e.key === "Enter") e.currentTarget.blur();
+				}}
+				className={`${inputClass} disabled:opacity-50`}
+			/>
+		</label>
+	);
+};
 
 export const SelectField = <T extends string>({
 	label,

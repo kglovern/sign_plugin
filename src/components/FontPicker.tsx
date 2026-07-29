@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
 	addFaceToRegistry,
@@ -24,9 +24,13 @@ type Props = {
  * the case where the Local Font Access API is unavailable — or where the user
  * simply wants a font that is not installed.
  *
- * The family list is a `<datalist>` rather than a `<select>`: a Windows install
- * routinely carries several hundred families, and a native combobox with
- * type-ahead filtering beats scrolling a dropdown that long.
+ * The family list is a custom filterable combobox rather than a native
+ * `<select>` or `<input list>`/`<datalist>`: a Windows install routinely
+ * carries several hundred families, and a native combobox with type-ahead
+ * filtering beats scrolling a dropdown that long — but a `<datalist>`'s
+ * suggestion popup is OS-rendered, isn't stylable/scrollable, and snaps the
+ * input's value back to the last committed family the moment what's typed
+ * doesn't exactly match one, making it impossible to clear and retype.
  */
 const FontPicker = ({
 	registry,
@@ -34,14 +38,27 @@ const FontPicker = ({
 	selectedKey,
 	onSelect,
 }: Props) => {
-	const listId = useId();
 	const fileRef = useRef<HTMLInputElement>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [dragOver, setDragOver] = useState(false);
+	const [query, setQuery] = useState("");
+	const [open, setOpen] = useState(false);
+	const [highlight, setHighlight] = useState(0);
+	const optionMouseDown = useRef(false);
 
 	const selected = registry.faces.find((f) => f.key === selectedKey);
 	const family = selected?.family ?? "";
 	const styles = family ? facesForFamily(registry, family) : [];
+
+	// Keep the query in sync with the committed family when it changes for
+	// reasons other than typing in this field (initial load, another control).
+	useEffect(() => {
+		setQuery(family);
+	}, [family]);
+
+	const filtered = registry.families.filter((f) =>
+		f.toLowerCase().includes(query.trim().toLowerCase()),
+	);
 
 	const addFiles = async (files: FileList | null) => {
 		if (!files || files.length === 0) return;
@@ -72,6 +89,13 @@ const FontPicker = ({
 		if (faces.length === 0) return;
 		const upright = faces.find((f) => /^(regular|book|normal)$/i.test(f.style));
 		onSelect((upright ?? faces[0]).key);
+		setQuery(nextFamily);
+		setOpen(false);
+	};
+
+	const revert = () => {
+		setQuery(family);
+		setOpen(false);
 	};
 
 	return (
@@ -88,7 +112,7 @@ const FontPicker = ({
 			}}
 			className={dragOver ? "rounded-md ring-2 ring-blue-500" : undefined}
 		>
-			<label className="mb-2 flex flex-col gap-1 text-xs">
+			<label className="relative mb-2 flex flex-col gap-1 text-xs">
 				<span className="text-gray-600 dark:text-gray-400">
 					Font family
 					{registry.faces.length > 0 ? (
@@ -96,19 +120,70 @@ const FontPicker = ({
 					) : null}
 				</span>
 				<input
-					list={listId}
-					value={family}
+					value={query}
 					placeholder={
 						registry.families.length > 0 ? "Type to search…" : "No fonts loaded"
 					}
-					onChange={(e) => chooseFamily(e.target.value)}
+					onChange={(e) => {
+						setQuery(e.target.value);
+						setOpen(true);
+						setHighlight(0);
+					}}
+					onFocus={() => setOpen(true)}
+					onBlur={() => {
+						if (optionMouseDown.current) {
+							optionMouseDown.current = false;
+							return;
+						}
+						if (filtered.includes(query)) {
+							chooseFamily(query);
+						} else {
+							revert();
+						}
+					}}
+					onKeyDown={(e) => {
+						if (e.key === "ArrowDown") {
+							e.preventDefault();
+							setOpen(true);
+							setHighlight((h) => Math.min(h + 1, filtered.length - 1));
+						} else if (e.key === "ArrowUp") {
+							e.preventDefault();
+							setHighlight((h) => Math.max(h - 1, 0));
+						} else if (e.key === "Enter") {
+							e.preventDefault();
+							const pick = filtered[highlight] ?? filtered[0];
+							if (pick) chooseFamily(pick);
+							else revert();
+							e.currentTarget.blur();
+						} else if (e.key === "Escape") {
+							e.preventDefault();
+							revert();
+							e.currentTarget.blur();
+						}
+					}}
 					className={inputClass}
 				/>
-				<datalist id={listId}>
-					{registry.families.map((f) => (
-						<option key={f} value={f} />
-					))}
-				</datalist>
+				{open && filtered.length > 0 ? (
+					<div className="absolute top-full z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+						{filtered.map((f, i) => (
+							<button
+								key={f}
+								type="button"
+								onMouseDown={() => {
+									optionMouseDown.current = true;
+								}}
+								onClick={() => chooseFamily(f)}
+								className={`block w-full cursor-pointer px-2 py-1.5 text-left text-sm ${
+									i === highlight
+										? "bg-blue-500 text-white"
+										: "hover:bg-gray-100 dark:hover:bg-gray-700"
+								}`}
+							>
+								{f}
+							</button>
+						))}
+					</div>
+				) : null}
 			</label>
 
 			{styles.length > 1 ? (

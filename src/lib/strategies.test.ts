@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { boundsOf, type Contour } from "./geometry";
+import { offsetContours } from "./clipper";
+import { boundsOf, type Contour, signedArea } from "./geometry";
 import { defaultProject, type TextSpec, type Tool } from "./project";
 import { blankContour } from "./shapes";
 import { pocketRings, textToolpath, vcarveRings } from "./strategies";
@@ -210,7 +211,12 @@ describe("textToolpath", () => {
 
 describe("blankContour", () => {
 	it("matches the requested width and height for every shape", () => {
-		for (const shape of ["rectangle", "rounded-rect", "ellipse"] as const) {
+		for (const shape of [
+			"rectangle",
+			"rounded-rect",
+			"ellipse",
+			"boat",
+		] as const) {
 			const contour = blankContour({
 				...baseProject.blank,
 				shape,
@@ -221,6 +227,99 @@ describe("blankContour", () => {
 
 			expect(bounds.maxX - bounds.minX).toBeCloseTo(150, 1);
 			expect(bounds.maxY - bounds.minY).toBeCloseTo(60, 1);
+		}
+	});
+
+	it("builds the tugboat as one closed, flattened, counter-clockwise contour", () => {
+		const contour = blankContour({
+			...baseProject.blank,
+			shape: "boat",
+			width: 150,
+			height: 60,
+		});
+
+		// Straight segments alone would be ~16 points; the extra vertices are the
+		// flattened bow and stern curves.
+		expect(contour.length).toBeGreaterThan(40);
+		// Same winding as every other blank, so clipper sees one convention.
+		expect(signedArea(contour)).toBeGreaterThan(0);
+	});
+
+	it("puts the tugboat's landmarks where they belong", () => {
+		const width = 220;
+		const height = 100;
+		const contour = blankContour({
+			...baseProject.blank,
+			shape: "boat",
+			width,
+			height,
+		});
+		// Design-box units map 1:1 at this size, offset to a centred origin.
+		const at = (x: number, y: number) => ({ x: x - width / 2, y: y - height / 2 });
+		const bounds = boundsOf([contour]);
+
+		const leftmost = contour.filter((p) => Math.abs(p.x - bounds.minX) < 1e-6);
+		const rightmost = contour.filter((p) => Math.abs(p.x - bounds.maxX) < 1e-6);
+		const lowest = contour.filter((p) => Math.abs(p.y - bounds.minY) < 1e-6);
+		const highest = contour.filter((p) => Math.abs(p.y - bounds.maxY) < 1e-6);
+
+		// Stern: a single point partway up the transom, not a full-height edge.
+		expect(leftmost).toHaveLength(1);
+		expect(leftmost[0].y).toBeCloseTo(at(0, 38).y, 6);
+
+		// Stem head: one point, and above the deck line so the bow reads as a bow
+		// rather than a nub on the sheer.
+		expect(rightmost).toHaveLength(1);
+		expect(rightmost[0].y).toBeCloseTo(at(0, 66).y, 6);
+		expect(rightmost[0].y).toBeGreaterThan(at(0, 46).y);
+
+		// Keel is flat, so at least two points share the lowest Y.
+		expect(lowest.length).toBeGreaterThanOrEqual(2);
+		// Chimney top is flat too, and sits forward of centre on the cabin roof.
+		expect(highest.length).toBeGreaterThanOrEqual(2);
+		expect(Math.min(...highest.map((p) => p.x))).toBeCloseTo(at(112, 0).x, 6);
+		expect(Math.max(...highest.map((p) => p.x))).toBeCloseTo(at(134, 0).x, 6);
+	});
+
+	it("keeps the tugboat inside its bounding box at any aspect ratio", () => {
+		for (const [width, height] of [
+			[150, 60],
+			[100, 100],
+			[300, 60],
+			[40, 40],
+		] as const) {
+			const contour = blankContour({
+				...baseProject.blank,
+				shape: "boat",
+				width,
+				height,
+			});
+			const bounds = boundsOf([contour]);
+
+			expect(bounds.maxX - bounds.minX).toBeCloseTo(width, 6);
+			expect(bounds.maxY - bounds.minY).toBeCloseTo(height, 6);
+			// Curves must never overshoot the box, or the blank would not fit the
+			// stock the user specified.
+			expect(bounds.minX).toBeCloseTo(-width / 2, 6);
+			expect(bounds.maxY).toBeCloseTo(height / 2, 6);
+		}
+	});
+
+	it("profiles the tugboat without the outline fragmenting", () => {
+		// Concave corners where the cabin meets the deck could split the offset
+		// into pieces; each piece would become its own plunge and pass.
+		for (const diameter of [3.175, 6, 12]) {
+			const contour = blankContour({
+				...baseProject.blank,
+				shape: "boat",
+				width: 150,
+				height: 60,
+			});
+			const offset = offsetContours([contour], diameter / 2);
+
+			expect(offset).toHaveLength(1);
+			const bounds = boundsOf(offset);
+			expect(bounds.maxX - bounds.minX).toBeCloseTo(150 + diameter, 2);
 		}
 	});
 

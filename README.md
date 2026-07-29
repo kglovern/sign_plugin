@@ -6,8 +6,8 @@ signs and generating GRBL-compliant G-code.
 Pick a blank shape, type some text in any font installed on your machine, lay it
 out on a grid, and send the toolpath straight to gSender's carve page.
 
-- **Blank shapes** — rectangle, rounded rectangle, ellipse/circle, with holding
-  tabs so the part does not break loose on the final pass
+- **Blank shapes** — rectangle, rounded rectangle, ellipse/circle and a tugboat,
+  with holding tabs so the part does not break loose on the final pass
 - **Hand-placed tabs** — drag them along the profile with mouse or touch, click
   the profile to add one, double-click or long-press to remove one
 - **Any system font** — enumerated through the Local Font Access API and parsed
@@ -91,7 +91,7 @@ emitter on the end.
 | `lib/fonts.ts` | `queryLocalFonts()` discovery, lazy `opentype.parse`, file-upload fallback |
 | `lib/flatten.ts` | Bézier → polygon, adaptive subdivision to a 0.01 mm chord tolerance |
 | `lib/text.ts` | Multi-line layout, kerning, alignment, and the one Y-down → Y-up flip |
-| `lib/shapes.ts` | Blank outlines |
+| `lib/shapes.ts` | Blank outlines, including the tugboat silhouette |
 | `lib/clipper.ts` | Integer scaling and **non-zero** fill for every boolean |
 | `lib/strategies/` | `vcarve`, `pocket`, `outline`, `engrave`, and the blank profile |
 | `lib/tabs.ts` | Arc-length tab placement, magnetic snapping, ramped entry and exit |
@@ -103,6 +103,29 @@ emitter on the end.
 `lib/text.ts` works in **design space** — millimetres, Y up, origin at the centre
 of the blank. `lib/generate.ts` applies the work-origin shift once, at the end.
 The design canvas re-applies a Y-down transform for rendering only.
+
+### The tugboat blank
+
+A nod to [3DBenchy](https://www.3dbenchy.com/), the boat every 3D printer prints
+first — the equivalent "first thing you cut" on a CNC.
+
+Unlike the other blanks it is not analytic. The silhouette is authored as a
+`PathCommand` list in a natural **220 × 100 design box**, so the coordinates in
+`lib/shapes.ts` read as the actual drawing at roughly 2.2:1 — which is why the
+150 × 60 default already looks right. Those commands are scaled into millimetres
+and then run through the same `flattenCommands` the glyph outlines use, so the
+curved bow and rounded stern get adaptive subdivision to the same 0.01 mm chord
+tolerance for free.
+
+Scaling happens **before** flattening, deliberately: the tolerance is absolute,
+so flattening in normalised space and scaling afterwards would multiply 0.01 up
+to a 1.5 mm error on a 150 mm blank.
+
+All four extremes are touched exactly (x at 0 and 220, y at 0 and 100), so the
+bounds come out as precisely width × height and the boat obeys the same
+stretch-to-fit rule as every other shape. A square blank gives a tall, squat tug.
+Both Bézier control hulls sit inside the design box, so no curve can overshoot an
+extreme — keep that true if the control points are ever retuned.
 
 ### Live geometry, on-demand toolpath
 
@@ -175,7 +198,7 @@ by drag-and-drop or file picker.
 
 ```bash
 npm run check   # tsc --noEmit
-npm test        # vitest — 103 tests
+npm test        # vitest — 107 tests
 npm run build   # production bundle into ui/
 ```
 

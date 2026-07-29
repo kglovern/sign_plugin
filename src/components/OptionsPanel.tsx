@@ -122,6 +122,7 @@ const OptionsPanel = ({
 						{ value: "rectangle", label: "Rectangle" },
 						{ value: "rounded-rect", label: "Rounded rectangle" },
 						{ value: "ellipse", label: "Ellipse / circle" },
+						{ value: "boat", label: "Tugboat" },
 					]}
 				/>
 				<Row>

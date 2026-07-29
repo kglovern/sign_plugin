@@ -7,7 +7,7 @@
 
 export type Units = "mm" | "in";
 
-export type BlankShape = "rectangle" | "rounded-rect" | "ellipse";
+export type BlankShape = "rectangle" | "rounded-rect" | "ellipse" | "boat";
 
 export type TextStrategy = "vcarve" | "pocket" | "outline" | "engrave";
 

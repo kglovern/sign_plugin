@@ -11,7 +11,6 @@ yarn-error.log*
 .vscode/*
 
 # Vite build output — the SPA bundle gSender serves. Build before shipping.
-/ui
 /dist
 .DS_Store
 /.idea/

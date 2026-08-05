@@ -50,7 +50,7 @@ const GcodeView = ({ gcode, onCopy, onSave }: Props) => {
 
 	return (
 		<div className="flex h-full flex-col gap-2">
-			<div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+			<div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
 				<span>
 					{stats.lines} lines · {stats.motion} motion ·{" "}
 					{(stats.bytes / 1024).toFixed(1)} kB
@@ -60,7 +60,7 @@ const GcodeView = ({ gcode, onCopy, onSave }: Props) => {
 					type="button"
 					onClick={copy}
 					disabled={busy}
-					className="cursor-pointer rounded-md border border-gray-300 px-2 py-1 hover:border-blue-500 disabled:opacity-50 dark:border-gray-700"
+					className="min-h-12 cursor-pointer rounded-md border border-gray-300 px-4 hover:border-blue-500 disabled:opacity-50 dark:border-gray-700"
 				>
 					{copied ? "Copied" : "Copy"}
 				</button>
@@ -68,7 +68,7 @@ const GcodeView = ({ gcode, onCopy, onSave }: Props) => {
 					type="button"
 					onClick={save}
 					disabled={busy}
-					className="cursor-pointer rounded-md border border-gray-300 px-2 py-1 hover:border-blue-500 disabled:opacity-50 dark:border-gray-700"
+					className="min-h-12 cursor-pointer rounded-md border border-gray-300 px-4 hover:border-blue-500 disabled:opacity-50 dark:border-gray-700"
 				>
 					Save .nc
 				</button>

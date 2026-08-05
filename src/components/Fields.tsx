@@ -1,7 +1,12 @@
 import { type ReactNode, useEffect, useState } from "react";
 
-const inputClass =
-	"w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm " +
+/**
+ * Shared by every control in this file and by `FontPicker`. Sized for a finger:
+ * 48px tall, and 16px text — anything smaller and a mobile browser zooms the
+ * page when the field takes focus.
+ */
+export const inputClass =
+	"w-full min-h-12 rounded-md border border-gray-300 bg-white px-3 py-2 text-base " +
 	"dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 
 export const Section = ({
@@ -14,7 +19,7 @@ export const Section = ({
 	right?: ReactNode;
 }) => (
 	<fieldset className="mb-4 rounded-lg border border-gray-300 p-3 dark:border-gray-700">
-		<legend className="flex items-center gap-2 px-1 text-sm font-semibold">
+		<legend className="flex items-center gap-2 px-1 text-base font-semibold">
 			{title}
 			{right}
 		</legend>
@@ -66,7 +71,7 @@ export const NumberField = ({
 	};
 
 	return (
-		<label className="mb-2 flex flex-col gap-1 text-xs" title={title}>
+		<label className="mb-3 flex flex-col gap-1 text-sm" title={title}>
 			<span className="text-gray-600 dark:text-gray-400">
 				{label}
 				{suffix ? <span className="text-gray-400"> ({suffix})</span> : null}
@@ -102,7 +107,7 @@ export const SelectField = <T extends string>({
 	onChange: (value: T) => void;
 	title?: string;
 }) => (
-	<label className="mb-2 flex flex-col gap-1 text-xs" title={title}>
+	<label className="mb-3 flex flex-col gap-1 text-sm" title={title}>
 		<span className="text-gray-600 dark:text-gray-400">{label}</span>
 		<select
 			value={value}
@@ -129,12 +134,12 @@ export const CheckField = ({
 	onChange: (checked: boolean) => void;
 	title?: string;
 }) => (
-	<label className="mb-2 flex items-center gap-2 text-xs" title={title}>
+	<label className="mb-3 flex min-h-12 items-center gap-3 text-sm" title={title}>
 		<input
 			type="checkbox"
 			checked={checked}
 			onChange={(e) => onChange(e.target.checked)}
-			className="h-4 w-4"
+			className="h-6 w-6"
 		/>
 		<span className="text-gray-600 dark:text-gray-400">{label}</span>
 	</label>
@@ -151,7 +156,7 @@ export const TextAreaField = ({
 	onChange: (value: string) => void;
 	rows?: number;
 }) => (
-	<label className="mb-2 flex flex-col gap-1 text-xs">
+	<label className="mb-3 flex flex-col gap-1 text-sm">
 		<span className="text-gray-600 dark:text-gray-400">{label}</span>
 		<textarea
 			value={value}

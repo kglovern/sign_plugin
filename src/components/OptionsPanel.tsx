@@ -112,9 +112,9 @@ const OptionsPanel = ({
 							{ value: "lower-left", label: "Lower-left" },
 						]}
 					/>
-					<div className="mb-2 flex flex-col gap-1 text-xs">
+					<div className="mb-3 flex flex-col gap-1 text-sm">
 						<span className="text-gray-600 dark:text-gray-400">Units</span>
-						<span className="rounded-md border border-transparent px-2 py-1.5 text-sm text-gray-500">
+						<span className="flex min-h-12 items-center px-3 text-base text-gray-500">
 							{units} (from gSender)
 						</span>
 					</div>
@@ -305,7 +305,7 @@ const OptionsPanel = ({
 					onChange={(depth) => patchText({ depth })}
 				/>
 				{project.text.strategy === "vcarve" ? (
-					<p className="text-[11px] leading-snug text-gray-500">
+					<p className="text-sm leading-snug text-gray-500">
 						V-carve is approximated with progressive offsets rather than a true
 						medial axis. Check depth on scrap before committing.
 					</p>
@@ -483,11 +483,11 @@ const OptionsPanel = ({
 								})
 							}
 							disabled={project.tabs.positions.length === 0}
-							className="mb-2 w-full cursor-pointer rounded-md border border-gray-300 px-2 py-1.5 text-xs hover:border-blue-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700"
+							className="mb-3 min-h-12 w-full cursor-pointer rounded-md border border-gray-300 px-3 text-sm hover:border-blue-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700"
 						>
 							Distribute evenly
 						</button>
-						<p className="text-[11px] leading-snug text-gray-500">
+						<p className="text-sm leading-snug text-gray-500">
 							On the Design tab: drag a tab to move it, click the dashed profile
 							to add one, double-click or long-press a tab to remove it.
 						</p>

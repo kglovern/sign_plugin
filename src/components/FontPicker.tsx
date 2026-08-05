@@ -8,9 +8,7 @@ import {
 	registerCustomFont,
 } from "../lib/fonts";
 
-const inputClass =
-	"w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm " +
-	"dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
+import { inputClass } from "./Fields";
 
 type Props = {
 	registry: FontRegistry;
@@ -112,7 +110,7 @@ const FontPicker = ({
 			}}
 			className={dragOver ? "rounded-md ring-2 ring-blue-500" : undefined}
 		>
-			<label className="relative mb-2 flex flex-col gap-1 text-xs">
+			<label className="relative mb-3 flex flex-col gap-1 text-sm">
 				<span className="text-gray-600 dark:text-gray-400">
 					Font family
 					{registry.faces.length > 0 ? (
@@ -173,7 +171,7 @@ const FontPicker = ({
 									optionMouseDown.current = true;
 								}}
 								onClick={() => chooseFamily(f)}
-								className={`block w-full cursor-pointer px-2 py-1.5 text-left text-sm ${
+								className={`block min-h-12 w-full cursor-pointer px-3 py-2 text-left text-base ${
 									i === highlight
 										? "bg-blue-500 text-white"
 										: "hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -187,7 +185,7 @@ const FontPicker = ({
 			</label>
 
 			{styles.length > 1 ? (
-				<label className="mb-2 flex flex-col gap-1 text-xs">
+				<label className="mb-3 flex flex-col gap-1 text-sm">
 					<span className="text-gray-600 dark:text-gray-400">Style</span>
 					<select
 						value={selectedKey ?? ""}
@@ -204,7 +202,7 @@ const FontPicker = ({
 			) : null}
 
 			{!registry.systemFontsAvailable && registry.unavailableReason ? (
-				<p className="mb-2 rounded-md bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+				<p className="mb-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
 					{registry.unavailableReason}
 				</p>
 			) : null}
@@ -212,7 +210,7 @@ const FontPicker = ({
 			<button
 				type="button"
 				onClick={() => fileRef.current?.click()}
-				className="w-full cursor-pointer rounded-md border border-dashed border-gray-400 px-2 py-1.5 text-xs text-gray-600 hover:border-blue-500 hover:text-blue-600 dark:border-gray-600 dark:text-gray-400"
+				className="min-h-12 w-full cursor-pointer rounded-md border border-dashed border-gray-400 px-3 py-2 text-sm text-gray-600 hover:border-blue-500 hover:text-blue-600 dark:border-gray-600 dark:text-gray-400"
 			>
 				Add font file… (or drop a .ttf / .otf here)
 			</button>
@@ -226,7 +224,7 @@ const FontPicker = ({
 			/>
 
 			{error ? (
-				<p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
+				<p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
 			) : null}
 		</div>
 	);

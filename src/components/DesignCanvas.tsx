@@ -14,6 +14,11 @@ import { magnetToEvenSpacing } from "../lib/tabs";
 type Props = {
 	project: Project;
 	geometry: SignGeometry;
+	/**
+	 * Marks the element the current step is about, so what can be dragged looks
+	 * draggable before anyone has tried it.
+	 */
+	emphasis?: "text" | "tabs" | null;
 	onMoveText: (x: number, y: number) => void;
 	onMoveTab: (index: number, fraction: number) => void;
 	onAddTab: (fraction: number) => void;
@@ -24,8 +29,8 @@ type Props = {
 const MAX_GRID_LINES = 300;
 
 /** Screen-space sizes, in CSS pixels, converted to mm at render time. */
-const MARKER_PX = 7;
-const HIT_PX = 22;
+const MARKER_PX = 9;
+const HIT_PX = 28;
 const PROFILE_HIT_PX = 20;
 /** How close to an evenly spaced position a drag must get before it snaps. */
 const MAGNET_PX = 10;
@@ -56,6 +61,7 @@ type DragState =
 const DesignCanvas = ({
 	project,
 	geometry,
+	emphasis = null,
 	onMoveText,
 	onMoveTab,
 	onAddTab,
@@ -363,7 +369,7 @@ const DesignCanvas = ({
 							fillRule="nonzero"
 							className="fill-slate-800 dark:fill-slate-200"
 						/>
-						{draggingText ? (
+						{draggingText || emphasis === "text" ? (
 							<rect
 								x={bounds.minX}
 								y={bounds.minY}
@@ -371,9 +377,10 @@ const DesignCanvas = ({
 								height={Math.max(bounds.maxY - bounds.minY, 0.01)}
 								fill="none"
 								className="stroke-blue-500"
-								strokeWidth={1}
+								strokeWidth={draggingText ? 1.5 : 1}
 								strokeDasharray="4 3"
 								vectorEffect="non-scaling-stroke"
+								opacity={draggingText ? 1 : 0.7}
 							/>
 						) : null}
 					</g>

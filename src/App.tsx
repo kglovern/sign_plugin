@@ -12,9 +12,16 @@ import {
 	useState,
 } from "react";
 
+import AllSettingsSheet from "./components/AllSettingsSheet";
 import DesignCanvas from "./components/DesignCanvas";
 import GcodeView from "./components/GcodeView";
-import OptionsPanel from "./components/OptionsPanel";
+import StepCarve from "./components/wizard/StepCarve";
+import StepNav, { type StepKey, STEPS, stepIndex } from "./components/wizard/StepNav";
+import StepPlace from "./components/wizard/StepPlace";
+import StepShape from "./components/wizard/StepShape";
+import StepText from "./components/wizard/StepText";
+import StepTune from "./components/wizard/StepTune";
+import { TouchButton } from "./components/touch/Touch";
 import { isStandalone } from "./dev/mockBridge";
 import {
 	discoverSystemFonts,
@@ -61,16 +68,15 @@ const GeneratePrompt = ({
 	busy: boolean;
 	onGenerate: () => Promise<unknown>;
 }) => (
-	<div className="flex h-full flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 dark:border-gray-700">
-		<p className="m-0">No toolpath yet.</p>
-		<button
-			type="button"
+	<div className="flex h-full flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500 dark:border-gray-700">
+		<p className="m-0">Nothing worked out yet.</p>
+		<TouchButton
+			variant="primary"
 			onClick={() => void onGenerate()}
 			disabled={busy}
-			className="cursor-pointer rounded-md border border-blue-600 bg-blue-600 px-3 py-1.5 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
 		>
-			{busy ? "Generating…" : "Generate toolpath"}
-		</button>
+			{busy ? "Working…" : "Work out the toolpath"}
+		</TouchButton>
 	</div>
 );
 
@@ -88,8 +94,8 @@ const StaleWrapper = ({
 }) => (
 	<div className="flex h-full min-h-0 flex-col gap-2">
 		{stale ? (
-			<p className="m-0 rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-				Out of date — press Generate toolpath to update.
+			<p className="m-0 rounded-md bg-amber-100 px-2 py-1 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+				Out of date — the design has changed since this was worked out.
 			</p>
 		) : null}
 		<div className={`min-h-0 grow ${stale ? "opacity-50" : ""}`}>{children}</div>
@@ -112,6 +118,8 @@ const App = () => {
 	const [registry, setRegistry] = useState<FontRegistry>(EMPTY_REGISTRY);
 	const [font, setFont] = useState<Font | null>(null);
 	const [fontError, setFontError] = useState<string | null>(null);
+	const [step, setStep] = useState<StepKey>("shape");
+	const [allSettingsOpen, setAllSettingsOpen] = useState(false);
 	const [tab, setTab] = useState<TabKey>("design");
 	// Once the 3D preview has been opened, keep it mounted so it does not have
 	// to rebuild its WebGL context every time the user switches back.
@@ -223,6 +231,35 @@ const App = () => {
 		return runGenerate();
 	}, [output, signature, runGenerate]);
 
+	/**
+	 * Reaching the last step works the toolpath out on its own. Having to know
+	 * about a separate "generate" action before anything appears is the kind of
+	 * hidden step that strands a first-time user.
+	 *
+	 * Re-runs whenever the result stops matching the design, which is what makes
+	 * an edit made from this step — the work origin — show up immediately. The
+	 * in-flight guard inside `runGenerate` keeps that from stacking up.
+	 */
+	useEffect(() => {
+		if (step !== "carve") return;
+		if (output && output.signature === signature) return;
+		void runGenerate();
+	}, [step, output, signature, runGenerate]);
+
+	/**
+	 * The preview follows the step: the design surface while the sign is being
+	 * built, the 3D toolpath once it is being checked. Only fires on a step
+	 * change, so a deliberate tap on another tab sticks.
+	 */
+	useEffect(() => {
+		if (step === "carve") {
+			setToolpathOpened(true);
+			setTab("toolpath");
+		} else {
+			setTab("design");
+		}
+	}, [step]);
+
 	const moveText = useCallback((x: number, y: number) => {
 		setProject((p) => ({ ...p, text: { ...p.text, x, y } }));
 	}, []);
@@ -315,39 +352,32 @@ const App = () => {
 	}, [runGenerate]);
 
 	const result = output?.result ?? null;
-	const passes = result?.toolpath.passes ?? [];
-	const minZ = result?.toolpath.minZ ?? 0;
-	const needsGenerate = result === null || isStale;
+	const index = stepIndex(step);
+	const nextStep = STEPS[index + 1];
+	const previousStep = STEPS[index - 1];
 
 	return (
-		<div className="flex h-full flex-col gap-3 p-3 text-gray-900 dark:text-gray-100">
-			<header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-				<h1 className="m-0 text-lg font-semibold">Simple Signs</h1>
-				<p className="m-0 text-xs text-gray-500">
-					{registry.systemFontsAvailable
-						? `${registry.families.length} system fonts`
-						: "System fonts unavailable"}
-					{" · "}
-					{result === null
-						? "toolpath not generated"
-						: `${passes.length} passes, deepest Z ${minZ.toFixed(2)} mm${
-								isStale ? " (out of date)" : ""
-							}`}
-				</p>
-			</header>
+		<div className="flex h-full flex-col gap-2 p-3 text-gray-900 dark:text-gray-100">
+			{allSettingsOpen ? (
+				<AllSettingsSheet
+					project={project}
+					setProject={setProject}
+					registry={registry}
+					onRegistryChange={setRegistry}
+					onClose={() => setAllSettingsOpen(false)}
+				/>
+			) : null}
 
-			<div className="grid min-h-0 grow grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_1fr]">
-				<div className="min-h-0 overflow-y-auto pr-1">
-					<OptionsPanel
-						project={project}
-						setProject={setProject}
-						registry={registry}
-						onRegistryChange={setRegistry}
-					/>
-				</div>
+			<StepNav
+				current={step}
+				onSelect={setStep}
+				onOpenAllSettings={() => setAllSettingsOpen(true)}
+			/>
 
-				<div className="flex min-h-0 flex-col gap-2">
-					<div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-800">
+			<div className="grid min-h-0 grow grid-cols-1 grid-rows-[40vh_minmax(0,1fr)] gap-3 md:grid-cols-[1fr_minmax(360px,440px)] md:grid-rows-[minmax(0,1fr)]">
+				{/* Preview — always on screen, so every change is visible as it is made. */}
+				<section className="flex min-h-0 min-w-0 flex-col gap-2">
+					<div className="flex shrink-0 items-center gap-1 border-b border-gray-200 dark:border-gray-800">
 						{TABS.map(({ key, label }) => (
 							<button
 								key={key}
@@ -356,7 +386,7 @@ const App = () => {
 									setTab(key);
 									if (key === "toolpath") setToolpathOpened(true);
 								}}
-								className={`cursor-pointer border-b-2 px-3 py-1.5 text-sm ${
+								className={`min-h-12 cursor-pointer border-b-2 px-4 text-base ${
 									tab === key
 										? "border-blue-600 font-medium text-blue-600"
 										: "border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
@@ -365,28 +395,6 @@ const App = () => {
 								{label}
 							</button>
 						))}
-						<span className="grow" />
-						<button
-							type="button"
-							onClick={() => void runGenerate()}
-							disabled={busy}
-							title="Regenerate the toolpath (Ctrl+Enter)"
-							className={`mb-1 cursor-pointer rounded-md border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50 ${
-								needsGenerate
-									? "border-blue-600 bg-blue-600 text-white"
-									: "border-gray-300 text-gray-600 hover:border-blue-500 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300"
-							}`}
-						>
-							{busy ? "Generating…" : "Generate toolpath"}
-						</button>
-						<button
-							type="button"
-							onClick={loadToGsender}
-							disabled={sending || busy}
-							className="mb-1 cursor-pointer rounded-md border border-blue-600 px-3 py-1.5 text-sm text-blue-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400"
-						>
-							{sending ? "Loading…" : "Load to gSender"}
-						</button>
 					</div>
 
 					<div className="min-h-0 grow">
@@ -398,6 +406,7 @@ const App = () => {
 							<DesignCanvas
 								project={project}
 								geometry={geometry}
+								emphasis={step === "place" ? "text" : null}
 								onMoveText={moveText}
 								onMoveTab={moveTab}
 								onAddTab={addTab}
@@ -443,28 +452,83 @@ const App = () => {
 							)}
 						</div>
 					</div>
+				</section>
 
-					<div className="min-h-[1.25rem] text-xs">
-						{fontError ? (
-							<p className="m-0 text-red-600 dark:text-red-400">{fontError}</p>
+				{/* The step itself. */}
+				<section className="flex min-h-0 min-w-0 flex-col">
+					<h1 className="m-0 mb-2 shrink-0 text-xl font-semibold">
+						{STEPS[index].title}
+					</h1>
+
+					{fontError ? (
+						<p className="m-0 mb-2 shrink-0 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+							{fontError}
+						</p>
+					) : null}
+
+					<div className="min-h-0 grow overflow-y-auto pr-1">
+						{step === "shape" ? (
+							<StepShape project={project} setProject={setProject} />
 						) : null}
-						{(result?.warnings ?? []).map((w) => (
-							<p key={w} className="m-0 text-amber-600 dark:text-amber-400">
-								{w}
-							</p>
-						))}
-						{status ? (
-							<p className="m-0 text-gray-500">{status}</p>
-						) : tab === "design" ? (
-							<p className="m-0 text-gray-500">
-								Drag the text or a tab to position it; click the dashed profile
-								to add a tab, double-click one to remove it. Hold Alt to bypass
-								snapping.
-							</p>
+						{step === "text" ? (
+							<StepText
+								project={project}
+								setProject={setProject}
+								font={font}
+								geometry={geometry}
+								registry={registry}
+								onRegistryChange={setRegistry}
+							/>
+						) : null}
+						{step === "place" ? (
+							<StepPlace
+								project={project}
+								setProject={setProject}
+								geometry={geometry}
+								onMoveText={moveText}
+							/>
+						) : null}
+						{step === "tune" ? (
+							<StepTune project={project} setProject={setProject} />
+						) : null}
+						{step === "carve" ? (
+							<StepCarve
+								project={project}
+								setProject={setProject}
+								result={result}
+								busy={busy}
+								stale={isStale}
+								sending={sending}
+								status={status}
+								onGenerate={() => void runGenerate()}
+								onLoad={() => void loadToGsender()}
+								onSave={() => void saveGcode()}
+							/>
 						) : null}
 					</div>
-				</div>
+				</section>
 			</div>
+
+			<footer className="flex shrink-0 items-center gap-3 border-t border-gray-200 pt-2 dark:border-gray-800">
+				<TouchButton
+					variant="quiet"
+					disabled={!previousStep}
+					onClick={() => previousStep && setStep(previousStep.key)}
+					className="min-w-28"
+				>
+					← Back
+				</TouchButton>
+				<span className="grow" />
+				{nextStep ? (
+					<TouchButton
+						variant="primary"
+						onClick={() => setStep(nextStep.key)}
+						className="min-w-44"
+					>
+						Next: {nextStep.label} →
+					</TouchButton>
+				) : null}
+			</footer>
 		</div>
 	);
 };

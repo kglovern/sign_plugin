@@ -7,22 +7,20 @@
  *
  * It is Chromium-only, secure-contexts-only, and gated by the `local-fonts`
  * Permissions-Policy (default allowlist `self`). gSender mounts plugin iframes
- * same-origin with `allow-same-origin`, so the frame is covered by `self` — but
- * that is an implementation detail of the host we do not control, so every call
- * is feature-detected and every failure falls back to user-supplied font files.
+ * same-origin with `allow-same-origin`, so the frame is covered by `self` — and
+ * the desktop build is Electron, where the API is always there. Calls are still
+ * feature-detected, but a failure now leaves the picker empty and says why
+ * rather than offering a font-file fallback.
  */
 
 import { type Font, parse } from "opentype.js";
 
-export type FontSource = "system" | "custom";
-
 export type FontFace = {
-	/** Stable identity used in the project model. */
+	/** Stable identity used in the project model — the postscript name. */
 	key: string;
 	family: string;
 	style: string;
 	fullName: string;
-	source: FontSource;
 	load: () => Promise<ArrayBuffer>;
 };
 
@@ -39,8 +37,6 @@ export type FontRegistry = {
 const parsedCache = new Map<string, Font>();
 const faceIndex = new Map<string, FontFace>();
 
-let customCounter = 0;
-
 const indexFaces = (faces: FontFace[]): void => {
 	for (const face of faces) faceIndex.set(face.key, face);
 };
@@ -52,8 +48,8 @@ const sortedFamilies = (faces: FontFace[]): string[] =>
 
 /**
  * Enumerates installed system fonts. Resolves with an empty registry plus a
- * reason rather than throwing — an unavailable API is an expected state, not an
- * error, and the UI stays usable through the file-upload path.
+ * reason rather than throwing — the picker can say why it is empty, which is
+ * more use than an exception nobody sees.
  */
 export const discoverSystemFonts = async (): Promise<FontRegistry> => {
 	const empty = (reason: string): FontRegistry => ({
@@ -65,7 +61,7 @@ export const discoverSystemFonts = async (): Promise<FontRegistry> => {
 
 	if (typeof window === "undefined" || typeof window.queryLocalFonts !== "function") {
 		return empty(
-			"This browser does not support the Local Font Access API. Add a font file to continue.",
+			"This browser does not support the Local Font Access API, so no fonts could be listed.",
 		);
 	}
 
@@ -76,13 +72,13 @@ export const discoverSystemFonts = async (): Promise<FontRegistry> => {
 		const name = err instanceof DOMException ? err.name : "";
 		const reason =
 			name === "SecurityError"
-				? "Access to local fonts was blocked by browser policy. Add a font file to continue."
-				: `Could not read local fonts (${err instanceof Error ? err.message : String(err)}). Add a font file to continue.`;
+				? "Access to local fonts was blocked by browser policy, so no fonts could be listed."
+				: `Could not read local fonts: ${err instanceof Error ? err.message : String(err)}.`;
 		return empty(reason);
 	}
 
 	if (fontData.length === 0) {
-		return empty("No local fonts were returned. Add a font file to continue.");
+		return empty("No local fonts were returned.");
 	}
 
 	const faces: FontFace[] = fontData.map((data) => ({
@@ -90,7 +86,6 @@ export const discoverSystemFonts = async (): Promise<FontRegistry> => {
 		family: data.family,
 		style: data.style,
 		fullName: data.fullName,
-		source: "system" as const,
 		load: async () => (await data.blob()).arrayBuffer(),
 	}));
 
@@ -101,46 +96,6 @@ export const discoverSystemFonts = async (): Promise<FontRegistry> => {
 		families: sortedFamilies(faces),
 		systemFontsAvailable: true,
 	};
-};
-
-/**
- * Registers a user-supplied font file (drag/drop or file picker). Parses
- * immediately so a bad file is rejected at the point the user chose it, rather
- * than silently later when they type.
- */
-export const registerCustomFont = async (file: File): Promise<FontFace> => {
-	const buffer = await file.arrayBuffer();
-	// Throws for unsupported/corrupt files — let the caller surface it.
-	const font = parse(buffer);
-
-	customCounter += 1;
-	// `getEnglishName` walks the platform-keyed name table for us; reading
-	// `names.fontFamily` directly works in opentype v1 but is always undefined
-	// in v2, where names are nested under `windows` / `macintosh`.
-	const family =
-		font.getEnglishName("fontFamily") || file.name.replace(/\.[^.]+$/, "");
-	const style = font.getEnglishName("fontSubfamily") || "Regular";
-
-	const face: FontFace = {
-		key: `custom:${customCounter}`,
-		family,
-		style,
-		fullName: `${family} ${style}`.trim(),
-		source: "custom",
-		load: async () => buffer,
-	};
-
-	faceIndex.set(face.key, face);
-	parsedCache.set(face.key, font);
-	return face;
-};
-
-export const addFaceToRegistry = (
-	registry: FontRegistry,
-	face: FontFace,
-): FontRegistry => {
-	const faces = [...registry.faces.filter((f) => f.key !== face.key), face];
-	return { ...registry, faces, families: sortedFamilies(faces) };
 };
 
 export const getFace = (key: string): FontFace | undefined => faceIndex.get(key);

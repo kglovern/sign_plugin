@@ -4,8 +4,8 @@
  *
  * The bit lives here rather than with the feeds and speeds because choosing it
  * is a physical act — the user is looking at what is in the collet — and
- * because for three of the four strategies it is the thing that decides whether
- * the letters can be cut at all.
+ * because for pocket and outline it is the thing that decides whether the
+ * letters can be cut at all.
  */
 
 import type { Font } from "opentype.js";
@@ -14,13 +14,7 @@ import { useState } from "react";
 import { facesForFamily, type FontRegistry } from "../../lib/fonts";
 import { boundsSize } from "../../lib/geometry";
 import type { SignGeometry } from "../../lib/generate";
-import {
-	BIT_PRESETS,
-	fitTextSize,
-	matchBitPreset,
-	VBIT_ANGLE_PRESETS,
-	VBIT_DIAMETER_PRESETS,
-} from "../../lib/presets";
+import { BIT_PRESETS, fitTextSize, matchBitPreset } from "../../lib/presets";
 import type {
 	Align,
 	OutlineSide,
@@ -36,7 +30,6 @@ import {
 	TouchButton,
 } from "../touch/Touch";
 import { formatLength, LengthStepper, unitSteps } from "./Controls";
-import FontSheet from "./FontSheet";
 
 /** Sentinel for the "not one of the listed bits" chip. */
 const OTHER = "__other__";
@@ -57,20 +50,16 @@ const StepText = ({
 	font,
 	geometry,
 	registry,
-	onRegistryChange,
 }: {
 	project: Project;
 	setProject: (updater: (previous: Project) => Project) => void;
 	font: Font | null;
 	geometry: SignGeometry;
 	registry: FontRegistry;
-	onRegistryChange: (registry: FontRegistry) => void;
 }) => {
 	const { units, text, tool } = project;
 	const steps = unitSteps(units);
-	const [fontSheetOpen, setFontSheetOpen] = useState(false);
 	const [customBit, setCustomBit] = useState(false);
-	const [customVBit, setCustomVBit] = useState(false);
 
 	const patchText = (next: Partial<Project["text"]>) =>
 		setProject((p) => ({ ...p, text: { ...p.text, ...next } }));
@@ -81,10 +70,20 @@ const StepText = ({
 	const family = selectedFace?.family;
 	const styles = family ? facesForFamily(registry, family) : [];
 
+	/**
+	 * Picking a family picks a face: the plain upright weight if there is one, so
+	 * choosing "Georgia" never lands the user in Georgia Bold Italic. The
+	 * remaining weights are offered by the Weight chips below.
+	 */
+	const chooseFamily = (nextFamily: string) => {
+		const faces = facesForFamily(registry, nextFamily);
+		if (faces.length === 0) return;
+		const upright = faces.find((f) => /^(regular|book|normal)$/i.test(f.style));
+		patchText({ fontKey: (upright ?? faces[0]).key });
+	};
+
 	const matchedBit = matchBitPreset(tool.endmillDiameter);
 	const showCustomBit = customBit || matchedBit === null;
-	const matchedVBit = matchBitPreset(tool.vBitDiameter, VBIT_DIAMETER_PRESETS);
-	const showCustomVBit = customVBit || matchedVBit === null;
 
 	const bitChips = [
 		...BIT_PRESETS.map((preset) => ({
@@ -104,16 +103,6 @@ const StepText = ({
 
 	return (
 		<>
-			{fontSheetOpen ? (
-				<FontSheet
-					registry={registry}
-					onRegistryChange={onRegistryChange}
-					selectedKey={text.fontKey}
-					onSelect={(fontKey) => patchText({ fontKey })}
-					onClose={() => setFontSheetOpen(false)}
-				/>
-			) : null}
-
 			<Card title="Words">
 				<label className="flex flex-col gap-1">
 					<FieldLabel>Sign text</FieldLabel>
@@ -129,14 +118,33 @@ const StepText = ({
 
 				<div className="flex flex-col gap-1">
 					<FieldLabel>Font</FieldLabel>
-					<TouchButton variant="quiet" onClick={() => setFontSheetOpen(true)}>
-						<span
-							className="truncate text-lg"
-							style={family ? { fontFamily: `"${family}", sans-serif` } : undefined}
-						>
-							{family ?? "Choose a font…"}
-						</span>
-					</TouchButton>
+					{/*
+					 * A native select rather than a custom list: the installed fonts are
+					 * the only fonts, the OS renders the dropdown at a size a finger can
+					 * hit, and Chromium honours the per-option `font-family` so the list
+					 * still previews itself.
+					 */}
+					<select
+						value={family ?? ""}
+						onChange={(e) => chooseFamily(e.target.value)}
+						className="min-h-14 w-full rounded-xl border-2 border-gray-300 bg-white px-4 text-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+					>
+						{family ? null : (
+							<option value="">
+								{registry.families.length > 0 ? "Choose a font…" : "No fonts found"}
+							</option>
+						)}
+						{registry.families.map((f) => (
+							<option key={f} value={f} style={{ fontFamily: `"${f}", sans-serif` }}>
+								{f}
+							</option>
+						))}
+					</select>
+					{!registry.systemFontsAvailable && registry.unavailableReason ? (
+						<p className="m-0 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+							{registry.unavailableReason}
+						</p>
+					) : null}
 				</div>
 
 				{styles.length > 1 ? (
@@ -194,11 +202,6 @@ const StepText = ({
 					onChange={(strategy) => patchText({ strategy })}
 					options={[
 						{
-							value: "vcarve",
-							label: "V-carve",
-							hint: "Sharp tapered letters. The classic carved-sign look. Needs a V-bit.",
-						},
-						{
 							value: "pocket",
 							label: "Pocket",
 							hint: "Flat-bottomed letters, cleared right out. Slowest, boldest.",
@@ -215,13 +218,6 @@ const StepText = ({
 						},
 					]}
 				/>
-
-				{text.strategy === "vcarve" ? (
-					<Hint>
-						V-carve here is approximated with progressive offsets rather than a
-						true medial axis. Check the depth on scrap before committing.
-					</Hint>
-				) : null}
 
 				{text.strategy === "outline" ? (
 					<div className="flex flex-col gap-1">
@@ -241,11 +237,7 @@ const StepText = ({
 
 			<Card
 				title="Which bit is in your router?"
-				hint={
-					text.strategy === "vcarve"
-						? "The straight bit cuts the sign out; the V-bit carves the letters."
-						: "This bit cuts the letters and cuts the sign out."
-				}
+				hint="This bit cuts the letters and cuts the sign out."
 			>
 				<div className="flex flex-col gap-1">
 					<FieldLabel>Straight bit</FieldLabel>
@@ -277,70 +269,8 @@ const StepText = ({
 				{bitLooksTooWide(project) ? (
 					<p className="m-0 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
 						That bit may be too wide to fit inside letters this small. Try a
-						smaller bit, bigger letters, or V-carve.
+						smaller bit, bigger letters, or Engrave.
 					</p>
-				) : null}
-
-				{text.strategy === "vcarve" ? (
-					<>
-						<div className="flex flex-col gap-1">
-							<FieldLabel>V-bit angle</FieldLabel>
-							<Chips<number>
-								value={tool.vBitAngle}
-								onChange={(vBitAngle) => patchTool({ vBitAngle })}
-								options={VBIT_ANGLE_PRESETS.map((preset) => ({
-									value: preset.angle,
-									label: preset.label,
-								}))}
-							/>
-							<Hint>
-								Stamped on the bit. A narrower angle cuts finer detail and goes
-								deeper.
-							</Hint>
-						</div>
-						<div className="flex flex-col gap-1">
-							<FieldLabel>V-bit width</FieldLabel>
-							<Chips<string>
-								value={showCustomVBit ? OTHER : (matchedVBit?.label ?? OTHER)}
-								options={[
-									...VBIT_DIAMETER_PRESETS.map((preset) => ({
-										value: preset.label,
-										label: preset.label,
-										sub: formatLength(
-											preset.diameter,
-											units,
-											units === "in" ? 3 : 2,
-										),
-									})),
-									{ value: OTHER, label: "Other…" },
-								]}
-								onChange={(choice) => {
-									if (choice === OTHER) {
-										setCustomVBit(true);
-										return;
-									}
-									setCustomVBit(false);
-									const preset = VBIT_DIAMETER_PRESETS.find(
-										(p) => p.label === choice,
-									);
-									if (preset) patchTool({ vBitDiameter: preset.diameter });
-								}}
-							/>
-							<Hint>
-								The width across the top of the bit — it caps how deep the carve
-								can go.
-							</Hint>
-						</div>
-						{showCustomVBit ? (
-							<LengthStepper
-								label="V-bit width"
-								units={units}
-								value={tool.vBitDiameter}
-								min={0}
-								onChange={(vBitDiameter) => patchTool({ vBitDiameter })}
-							/>
-						) : null}
-					</>
 				) : null}
 			</Card>
 		</>

@@ -38,7 +38,7 @@ const NON_ZERO = ClipperLib.PolyFillType.pftNonZero;
 /**
  * Offsets closed contours by `delta` mm. Positive grows, negative shrinks.
  * Returns `[]` once the shape has been eaten away entirely — which is exactly
- * the termination condition the pocket and V-carve strategies rely on.
+ * the termination condition the pocket strategy relies on.
  */
 export const offsetContours = (
 	contours: Contour[],

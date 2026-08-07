@@ -128,6 +128,13 @@ const App = () => {
 	const [sending, setSending] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const runningRef = useRef<Promise<GenerateResult> | null>(null);
+	const stepBodyRef = useRef<HTMLDivElement>(null);
+
+	// The step body is one scroll container that swaps its contents, so without
+	// this a step opens at wherever the last one was scrolled to.
+	useEffect(() => {
+		stepBodyRef.current?.scrollTo({ top: 0 });
+	}, [step]);
 
 	// gSender owns the unit system; mirror it rather than letting the user pick.
 	useEffect(() => {
@@ -182,7 +189,7 @@ const App = () => {
 		[deferredProject, font],
 	);
 
-	// The toolpath is the expensive half — up to ~130ms for a V-carve — so it
+	// The toolpath is the expensive half — up to ~130ms for a deep pocket — so it
 	// runs only when asked. `signature` is how we know the stored result no
 	// longer matches the parameters on screen.
 	const [output, setOutput] = useState<{
@@ -363,7 +370,6 @@ const App = () => {
 					project={project}
 					setProject={setProject}
 					registry={registry}
-					onRegistryChange={setRegistry}
 					onClose={() => setAllSettingsOpen(false)}
 				/>
 			) : null}
@@ -374,7 +380,65 @@ const App = () => {
 				onOpenAllSettings={() => setAllSettingsOpen(true)}
 			/>
 
-			<div className="grid min-h-0 grow grid-cols-1 grid-rows-[40vh_minmax(0,1fr)] gap-3 md:grid-cols-[1fr_minmax(360px,440px)] md:grid-rows-[minmax(0,1fr)]">
+			{/*
+			 * Controls on the left, preview on the right: the left is where the hand
+			 * goes, and the preview only needs to be looked at. Narrow screens stack
+			 * with the preview pinned to a fixed band at the bottom.
+			 */}
+			<div className="grid min-h-0 grow grid-cols-1 grid-rows-[minmax(0,1fr)_40vh] gap-3 md:grid-cols-[minmax(400px,480px)_1fr] md:grid-rows-[minmax(0,1fr)]">
+				{/* The step itself. */}
+				<section className="flex min-h-0 min-w-0 flex-col">
+					<h1 className="m-0 mb-2 shrink-0 text-xl font-semibold">
+						{STEPS[index].title}
+					</h1>
+
+					{fontError ? (
+						<p className="m-0 mb-2 shrink-0 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+							{fontError}
+						</p>
+					) : null}
+
+					<div ref={stepBodyRef} className="min-h-0 grow overflow-y-auto pr-1">
+						{step === "shape" ? (
+							<StepShape project={project} setProject={setProject} />
+						) : null}
+						{step === "text" ? (
+							<StepText
+								project={project}
+								setProject={setProject}
+								font={font}
+								geometry={geometry}
+								registry={registry}
+							/>
+						) : null}
+						{step === "place" ? (
+							<StepPlace
+								project={project}
+								setProject={setProject}
+								geometry={geometry}
+								onMoveText={moveText}
+							/>
+						) : null}
+						{step === "tune" ? (
+							<StepTune project={project} setProject={setProject} />
+						) : null}
+						{step === "carve" ? (
+							<StepCarve
+								project={project}
+								setProject={setProject}
+								result={result}
+								busy={busy}
+								stale={isStale}
+								sending={sending}
+								status={status}
+								onGenerate={() => void runGenerate()}
+								onLoad={() => void loadToGsender()}
+								onSave={() => void saveGcode()}
+							/>
+						) : null}
+					</div>
+				</section>
+
 				{/* Preview — always on screen, so every change is visible as it is made. */}
 				<section className="flex min-h-0 min-w-0 flex-col gap-2">
 					<div className="flex shrink-0 items-center gap-1 border-b border-gray-200 dark:border-gray-800">
@@ -451,60 +515,6 @@ const App = () => {
 								</StaleWrapper>
 							)}
 						</div>
-					</div>
-				</section>
-
-				{/* The step itself. */}
-				<section className="flex min-h-0 min-w-0 flex-col">
-					<h1 className="m-0 mb-2 shrink-0 text-xl font-semibold">
-						{STEPS[index].title}
-					</h1>
-
-					{fontError ? (
-						<p className="m-0 mb-2 shrink-0 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-							{fontError}
-						</p>
-					) : null}
-
-					<div className="min-h-0 grow overflow-y-auto pr-1">
-						{step === "shape" ? (
-							<StepShape project={project} setProject={setProject} />
-						) : null}
-						{step === "text" ? (
-							<StepText
-								project={project}
-								setProject={setProject}
-								font={font}
-								geometry={geometry}
-								registry={registry}
-								onRegistryChange={setRegistry}
-							/>
-						) : null}
-						{step === "place" ? (
-							<StepPlace
-								project={project}
-								setProject={setProject}
-								geometry={geometry}
-								onMoveText={moveText}
-							/>
-						) : null}
-						{step === "tune" ? (
-							<StepTune project={project} setProject={setProject} />
-						) : null}
-						{step === "carve" ? (
-							<StepCarve
-								project={project}
-								setProject={setProject}
-								result={result}
-								busy={busy}
-								stale={isStale}
-								sending={sending}
-								status={status}
-								onGenerate={() => void runGenerate()}
-								onLoad={() => void loadToGsender()}
-								onSave={() => void saveGcode()}
-							/>
-						) : null}
 					</div>
 				</section>
 			</div>

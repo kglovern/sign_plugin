@@ -12,7 +12,6 @@ import {
 	matchSizePreset,
 	profileDepthFor,
 	SIGN_SIZE_PRESETS,
-	VBIT_DIAMETER_PRESETS,
 } from "./presets";
 import { defaultProject, MM_PER_INCH } from "./project";
 import { layoutText } from "./text";
@@ -95,12 +94,10 @@ describe("bit presets", () => {
 		expect(matchBitPreset(3)).toBeNull();
 	});
 
-	it("matches the default V-bit diameter to 1/2in", () => {
-		const matched = matchBitPreset(
-			defaultProject().tool.vBitDiameter,
-			VBIT_DIAMETER_PRESETS,
+	it("matches the default endmill diameter to 1/8in", () => {
+		expect(matchBitPreset(defaultProject().tool.endmillDiameter)?.label).toBe(
+			'1/8"',
 		);
-		expect(matched?.label).toBe('1/2"');
 	});
 });
 

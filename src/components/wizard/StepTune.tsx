@@ -33,22 +33,16 @@ const StepTune = ({
 		setProject((p) => ({ ...p, blank: { ...p.blank, ...next } }));
 
 	const activeFeed = matchFeedPreset(tool);
-	const vcarve = text.strategy === "vcarve";
 
 	return (
 		<>
 			<Card title="How deep">
 				<LengthStepper
-					label={vcarve ? "Deepest the letters go" : "Letter depth"}
+					label="Letter depth"
 					units={units}
 					value={text.depth}
 					min={0}
 					onChange={(depth) => patchText({ depth })}
-					hint={
-						vcarve
-							? "An upper limit. Thin strokes come out shallower than this on their own."
-							: undefined
-					}
 				/>
 				{blank.cutProfile ? (
 					<LengthStepper
@@ -117,28 +111,16 @@ const StepTune = ({
 					onChange={(stepdown) => patchTool({ stepdown })}
 					hint="The most material taken off in one pass. Deeper cuts are split into several."
 				/>
-				{vcarve ? (
-					<LengthStepper
-						label="V-carve ring spacing"
-						units={units}
-						step={steps.fine}
-						value={tool.vcarveStepover}
-						min={0.01}
-						onChange={(vcarveStepover) => patchTool({ vcarveStepover })}
-						hint="Smaller is smoother and slower."
-					/>
-				) : (
-					<Stepper
-						label="Overlap"
-						suffix="× bit width"
-						value={tool.stepover}
-						step={0.05}
-						min={0.05}
-						max={1}
-						onChange={(stepover) => patchTool({ stepover })}
-						hint="How much each clearing pass overlaps the last."
-					/>
-				)}
+				<Stepper
+					label="Overlap"
+					suffix="× bit width"
+					value={tool.stepover}
+					step={0.05}
+					min={0.05}
+					max={1}
+					onChange={(stepover) => patchTool({ stepover })}
+					hint="How much each clearing pass overlaps the last."
+				/>
 				<LengthStepper
 					label="Safe height"
 					units={units}

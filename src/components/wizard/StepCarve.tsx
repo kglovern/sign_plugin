@@ -11,12 +11,11 @@
  */
 
 import type { GenerateResult } from "../../lib/generate";
-import { toolForStrategy, type OriginMode, type Project } from "../../lib/project";
+import type { OriginMode, Project } from "../../lib/project";
 import { Card, Chips, Hint, TouchButton } from "../touch/Touch";
 import { formatLength } from "./Controls";
 
 const STRATEGY_NAMES: Record<Project["text"]["strategy"], string> = {
-	vcarve: "V-carve",
 	pocket: "Pocket",
 	outline: "Outline",
 	engrave: "Engrave",
@@ -53,7 +52,6 @@ const StepCarve = ({
 	onSave: () => void;
 }) => {
 	const { units, text, tool } = project;
-	const cutter = toolForStrategy(text.strategy, tool);
 	const passes = result?.toolpath.passes.length ?? 0;
 	const warnings = result?.warnings ?? [];
 	const nothingToCut = result !== null && passes === 0;
@@ -93,9 +91,11 @@ const StepCarve = ({
 						<Row label="Letters" value={STRATEGY_NAMES[text.strategy]} />
 						<Row
 							label="Bit"
-							value={`${formatLength(cutter.diameter, units, units === "in" ? 3 : 2)}${
-								cutter.isVBit ? ` V-bit at ${tool.vBitAngle}°` : ""
-							}`}
+							value={formatLength(
+								tool.endmillDiameter,
+								units,
+								units === "in" ? 3 : 2,
+							)}
 						/>
 						<Row
 							label="Cut the sign out"

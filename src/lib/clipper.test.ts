@@ -71,7 +71,7 @@ describe("offsetContours", () => {
 	});
 
 	it("returns nothing once the shape is consumed", () => {
-		// The pocket and V-carve loops both use this as their stop condition.
+		// The pocket clearing loop uses this as its stop condition.
 		expect(offsetContours([rect(0, 0, 10, 10)], -6)).toEqual([]);
 	});
 

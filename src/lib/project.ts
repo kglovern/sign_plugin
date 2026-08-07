@@ -9,7 +9,7 @@ export type Units = "mm" | "in";
 
 export type BlankShape = "rectangle" | "rounded-rect" | "ellipse" | "boat";
 
-export type TextStrategy = "vcarve" | "pocket" | "outline" | "engrave";
+export type TextStrategy = "pocket" | "outline" | "engrave";
 
 /** Which side of the glyph outline the cutter rides on for `outline`. */
 export type OutlineSide = "outside" | "inside" | "on-line";
@@ -35,7 +35,7 @@ export type Blank = {
 
 export type TextSpec = {
 	content: string;
-	/** Key into the font registry — a postscript name, or `custom:<n>`. */
+	/** Key into the font registry — the face's postscript name. */
 	fontKey: string | null;
 	/** Em size in mm. */
 	size: number;
@@ -54,10 +54,6 @@ export type TextSpec = {
 
 export type Tool = {
 	endmillDiameter: number;
-	/** Full included angle of the V-bit, in degrees. */
-	vBitAngle: number;
-	/** Flat diameter at the top of the V-bit; caps how wide a V-carve gets. */
-	vBitDiameter: number;
 	feedrate: number;
 	plungeRate: number;
 	spindleRpm: number;
@@ -67,13 +63,6 @@ export type Tool = {
 	stepdown: number;
 	/** Stepover as a fraction of tool diameter (0–1). */
 	stepover: number;
-	/**
-	 * Lateral spacing between V-carve rings, in mm. Independent of `stepover`
-	 * because it controls surface smoothness, not cutting load: each ring sits
-	 * `vcarveStepover / tan(halfAngle)` deeper than the last, so a fraction of a
-	 * large V-bit's diameter would give visible terracing.
-	 */
-	vcarveStepover: number;
 	/** Seconds to dwell after spindle start; 0 disables the G4. */
 	spindleDwell: number;
 };
@@ -125,7 +114,7 @@ export const unitsScale = (units: Units): number =>
 
 export const defaultProject = (): Project => ({
 	units: "mm",
-	origin: "center",
+	origin: "lower-left",
 	blank: {
 		shape: "rounded-rect",
 		width: 150,
@@ -145,20 +134,17 @@ export const defaultProject = (): Project => ({
 		x: 0,
 		y: 0,
 		depth: 3,
-		strategy: "vcarve",
+		strategy: "engrave",
 		outlineSide: "on-line",
 	},
 	tool: {
 		endmillDiameter: 3.175,
-		vBitAngle: 60,
-		vBitDiameter: 12.7,
 		feedrate: 1200,
 		plungeRate: 400,
 		spindleRpm: 15000,
 		safeZ: 5,
 		stepdown: 2,
 		stepover: 0.4,
-		vcarveStepover: 0.25,
 		spindleDwell: 2,
 	},
 	tabs: {
@@ -170,12 +156,3 @@ export const defaultProject = (): Project => ({
 	gridSpacing: 10,
 	snapToGrid: true,
 });
-
-/** The cutter actually used by a given text strategy. */
-export const toolForStrategy = (
-	strategy: TextStrategy,
-	tool: Tool,
-): { diameter: number; isVBit: boolean } =>
-	strategy === "vcarve"
-		? { diameter: tool.vBitDiameter, isVBit: true }
-		: { diameter: tool.endmillDiameter, isVBit: false };

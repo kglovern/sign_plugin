@@ -24,7 +24,6 @@ type Props = {
 	project: Project;
 	setProject: (updater: (previous: Project) => Project) => void;
 	registry: FontRegistry;
-	onRegistryChange: (registry: FontRegistry) => void;
 };
 
 /** Trims float noise introduced by converting mm ↔ inches for display. */
@@ -71,12 +70,7 @@ const Length = ({
 	/>
 );
 
-const OptionsPanel = ({
-	project,
-	setProject,
-	registry,
-	onRegistryChange,
-}: Props) => {
+const OptionsPanel = ({ project, setProject, registry }: Props) => {
 	const { units } = project;
 	const scale = unitsScale(units);
 	const imperial = units === "in";
@@ -202,7 +196,6 @@ const OptionsPanel = ({
 
 				<FontPicker
 					registry={registry}
-					onRegistryChange={onRegistryChange}
 					selectedKey={project.text.fontKey}
 					onSelect={(fontKey) => patchText({ fontKey })}
 				/>
@@ -270,7 +263,6 @@ const OptionsPanel = ({
 					value={project.text.strategy}
 					onChange={(strategy) => patchText({ strategy })}
 					options={[
-						{ value: "vcarve", label: "V-carve" },
 						{ value: "pocket", label: "Pocket (clear inside)" },
 						{ value: "outline", label: "Outline profile" },
 						{ value: "engrave", label: "Engrave centreline" },
@@ -289,54 +281,17 @@ const OptionsPanel = ({
 					/>
 				) : null}
 				<Length
-					label={
-						project.text.strategy === "vcarve" ? "Max text depth" : "Text depth"
-					}
+					label="Text depth"
 					units={units}
 					scale={scale}
 					step={lengthStep}
 					value={project.text.depth}
 					min={0}
-					title={
-						project.text.strategy === "vcarve"
-							? "An upper limit. Narrow strokes come out shallower than this on their own."
-							: undefined
-					}
 					onChange={(depth) => patchText({ depth })}
 				/>
-				{project.text.strategy === "vcarve" ? (
-					<p className="text-sm leading-snug text-gray-500">
-						V-carve is approximated with progressive offsets rather than a true
-						medial axis. Check depth on scrap before committing.
-					</p>
-				) : null}
 			</Section>
 
 			<Section title="Tool &amp; feeds">
-				{project.text.strategy === "vcarve" ? (
-					<Row>
-						<NumberField
-							label="V-bit angle"
-							suffix="°"
-							value={project.tool.vBitAngle}
-							step={5}
-							min={1}
-							max={179}
-							title="Full included angle of the bit."
-							onChange={(vBitAngle) => patchTool({ vBitAngle })}
-						/>
-						<Length
-							label="V-bit diameter"
-							units={units}
-							scale={scale}
-							step={lengthStep}
-							value={project.tool.vBitDiameter}
-							min={0}
-							title="Caps how deep the carve can go before the shank is cutting."
-							onChange={(vBitDiameter) => patchTool({ vBitDiameter })}
-						/>
-					</Row>
-				) : null}
 				<Row>
 					<Length
 						label="Endmill diameter"
@@ -405,29 +360,16 @@ const OptionsPanel = ({
 						title="Maximum depth of cut per pass."
 						onChange={(stepdown) => patchTool({ stepdown })}
 					/>
-					{project.text.strategy === "vcarve" ? (
-						<Length
-							label="V-carve ring step"
-							units={units}
-							scale={scale}
-							value={project.tool.vcarveStepover}
-							step={fineStep}
-							min={0.01}
-							title="Lateral spacing between rings. Smaller is smoother and slower."
-							onChange={(vcarveStepover) => patchTool({ vcarveStepover })}
-						/>
-					) : (
-						<NumberField
-							label="Stepover"
-							suffix="× dia"
-							value={project.tool.stepover}
-							step={0.05}
-							min={0.05}
-							max={1}
-							title="Pocket clearing overlap, as a fraction of tool diameter."
-							onChange={(stepover) => patchTool({ stepover })}
-						/>
-					)}
+					<NumberField
+						label="Stepover"
+						suffix="× dia"
+						value={project.tool.stepover}
+						step={0.05}
+						min={0.05}
+						max={1}
+						title="Pocket clearing overlap, as a fraction of tool diameter."
+						onChange={(stepover) => patchTool({ stepover })}
+					/>
 				</Row>
 			</Section>
 

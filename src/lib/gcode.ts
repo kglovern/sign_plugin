@@ -60,7 +60,7 @@ export const emitGcode = (
 	);
 	lines.push(
 		comment(
-			`Tool: endmill ${fmt(tool.endmillDiameter, 3)} mm, V-bit ${fmt(tool.vBitAngle, 1)} deg / ${fmt(tool.vBitDiameter, 2)} mm`,
+			`Tool: endmill ${fmt(tool.endmillDiameter, 3)} mm`,
 		),
 	);
 	lines.push(

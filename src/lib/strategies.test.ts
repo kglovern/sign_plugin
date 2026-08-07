@@ -4,7 +4,7 @@ import { offsetContours } from "./clipper";
 import { boundsOf, type Contour, signedArea } from "./geometry";
 import { defaultProject, type TextSpec, type Tool } from "./project";
 import { blankContour } from "./shapes";
-import { pocketRings, textToolpath, vcarveRings } from "./strategies";
+import { pocketRings, textToolpath } from "./strategies";
 import { depthSteps } from "./toolpath";
 
 /** A 40×20 rectangle standing in for a fat glyph. */
@@ -37,84 +37,6 @@ describe("depthSteps", () => {
 
 	it("returns nothing for a zero depth", () => {
 		expect(depthSteps(0, 2)).toEqual([]);
-	});
-});
-
-describe("vcarveRings", () => {
-	it("puts each ring at the depth its offset implies for the bit angle", () => {
-		const spec = { ...text, depth: 6 };
-		const { rings } = vcarveRings(glyph, spec, { ...tool, vBitAngle: 60 });
-
-		expect(rings.length).toBeGreaterThan(1);
-
-		// z = offset / tan(halfAngle); 60° included → 30° half angle.
-		const tanHalf = Math.tan((30 * Math.PI) / 180);
-		for (const ring of rings) {
-			expect(ring.z).toBeCloseTo(-ring.offset / tanHalf, 6);
-		}
-	});
-
-	it("starts at the surface on the glyph outline itself", () => {
-		const { rings } = vcarveRings(glyph, text, tool);
-		expect(rings[0].offset).toBe(0);
-		expect(rings[0].z).toBe(-0);
-		expect(rings[0].contours).toEqual(glyph);
-	});
-
-	it("gets narrower and deeper with each ring", () => {
-		const { rings } = vcarveRings(glyph, { ...text, depth: 6 }, tool);
-
-		for (let i = 1; i < rings.length; i += 1) {
-			expect(rings[i].z).toBeLessThan(rings[i - 1].z);
-
-			const previous = boundsOf(rings[i - 1].contours);
-			const current = boundsOf(rings[i].contours);
-			expect(current.maxX).toBeLessThan(previous.maxX);
-		}
-	});
-
-	it("stops at the requested maximum depth", () => {
-		const spec = { ...text, depth: 2 };
-		const { rings } = vcarveRings(glyph, spec, tool);
-		for (const ring of rings) {
-			expect(ring.z).toBeGreaterThanOrEqual(-spec.depth - 1e-9);
-		}
-	});
-
-	it("stops early when the stroke closes up before the depth limit", () => {
-		// A 2mm-wide stroke can only be carved 1mm in from each side, which at
-		// 60° is ~1.7mm deep — well short of the 20mm asked for.
-		const narrow: Contour[] = [
-			[
-				{ x: -10, y: -1 },
-				{ x: 10, y: -1 },
-				{ x: 10, y: 1 },
-				{ x: -10, y: 1 },
-			],
-		];
-		const { rings } = vcarveRings(narrow, { ...text, depth: 20 }, tool);
-		const deepest = Math.min(...rings.map((r) => r.z));
-
-		expect(deepest).toBeGreaterThan(-2);
-		expect(deepest).toBeLessThan(0);
-	});
-
-	it("warns when the bit diameter limits the achievable depth", () => {
-		const { warnings } = vcarveRings(
-			glyph,
-			{ ...text, depth: 50 },
-			{ ...tool, vBitDiameter: 6 },
-		);
-		expect(warnings.join(" ")).toMatch(/limited/i);
-	});
-
-	it("rejects a nonsensical bit angle", () => {
-		const { rings, warnings } = vcarveRings(glyph, text, {
-			...tool,
-			vBitAngle: 180,
-		});
-		expect(rings).toHaveLength(0);
-		expect(warnings.length).toBeGreaterThan(0);
 	});
 });
 
@@ -199,7 +121,7 @@ describe("textToolpath", () => {
 	});
 
 	it("never exceeds the requested text depth, whichever strategy", () => {
-		for (const strategy of ["vcarve", "pocket", "outline", "engrave"] as const) {
+		for (const strategy of ["pocket", "outline", "engrave"] as const) {
 			const spec: TextSpec = { ...text, strategy, depth: 4 };
 			const { passes } = textToolpath(glyph, spec, tool);
 			const zs = passes.flatMap((p) => p.moves.map((m) => m.z));

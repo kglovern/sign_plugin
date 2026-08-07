@@ -1,26 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 
-import {
-	addFaceToRegistry,
-	facesForFamily,
-	type FontFace,
-	type FontRegistry,
-	registerCustomFont,
-} from "../lib/fonts";
+import { facesForFamily, type FontRegistry } from "../lib/fonts";
 
 import { inputClass } from "./Fields";
 
 type Props = {
 	registry: FontRegistry;
-	onRegistryChange: (registry: FontRegistry) => void;
 	selectedKey: string | null;
 	onSelect: (key: string) => void;
 };
 
 /**
- * Family + style picker over the discovered fonts, with a file drop target for
- * the case where the Local Font Access API is unavailable — or where the user
- * simply wants a font that is not installed.
+ * Family + style picker over the installed fonts.
  *
  * The family list is a custom filterable combobox rather than a native
  * `<select>` or `<input list>`/`<datalist>`: a Windows install routinely
@@ -30,15 +21,7 @@ type Props = {
  * input's value back to the last committed family the moment what's typed
  * doesn't exactly match one, making it impossible to clear and retype.
  */
-const FontPicker = ({
-	registry,
-	onRegistryChange,
-	selectedKey,
-	onSelect,
-}: Props) => {
-	const fileRef = useRef<HTMLInputElement>(null);
-	const [error, setError] = useState<string | null>(null);
-	const [dragOver, setDragOver] = useState(false);
+const FontPicker = ({ registry, selectedKey, onSelect }: Props) => {
 	const [query, setQuery] = useState("");
 	const [open, setOpen] = useState(false);
 	const [highlight, setHighlight] = useState(0);
@@ -58,30 +41,6 @@ const FontPicker = ({
 		f.toLowerCase().includes(query.trim().toLowerCase()),
 	);
 
-	const addFiles = async (files: FileList | null) => {
-		if (!files || files.length === 0) return;
-		setError(null);
-
-		let next = registry;
-		let added: FontFace | null = null;
-		for (const file of Array.from(files)) {
-			try {
-				const face = await registerCustomFont(file);
-				next = addFaceToRegistry(next, face);
-				added = face;
-			} catch (err) {
-				setError(
-					`Could not read ${file.name}: ${err instanceof Error ? err.message : String(err)}`,
-				);
-			}
-		}
-
-		if (added) {
-			onRegistryChange(next);
-			onSelect(added.key);
-		}
-	};
-
 	const chooseFamily = (nextFamily: string) => {
 		const faces = facesForFamily(registry, nextFamily);
 		if (faces.length === 0) return;
@@ -97,19 +56,7 @@ const FontPicker = ({
 	};
 
 	return (
-		<div
-			onDragOver={(e) => {
-				e.preventDefault();
-				setDragOver(true);
-			}}
-			onDragLeave={() => setDragOver(false)}
-			onDrop={(e) => {
-				e.preventDefault();
-				setDragOver(false);
-				void addFiles(e.dataTransfer.files);
-			}}
-			className={dragOver ? "rounded-md ring-2 ring-blue-500" : undefined}
-		>
+		<div>
 			<label className="relative mb-3 flex flex-col gap-1 text-sm">
 				<span className="text-gray-600 dark:text-gray-400">
 					Font family
@@ -205,26 +152,6 @@ const FontPicker = ({
 				<p className="mb-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
 					{registry.unavailableReason}
 				</p>
-			) : null}
-
-			<button
-				type="button"
-				onClick={() => fileRef.current?.click()}
-				className="min-h-12 w-full cursor-pointer rounded-md border border-dashed border-gray-400 px-3 py-2 text-sm text-gray-600 hover:border-blue-500 hover:text-blue-600 dark:border-gray-600 dark:text-gray-400"
-			>
-				Add font file… (or drop a .ttf / .otf here)
-			</button>
-			<input
-				ref={fileRef}
-				type="file"
-				accept=".ttf,.otf,.woff,font/ttf,font/otf"
-				multiple
-				hidden
-				onChange={(e) => void addFiles(e.target.files)}
-			/>
-
-			{error ? (
-				<p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
 			) : null}
 		</div>
 	);

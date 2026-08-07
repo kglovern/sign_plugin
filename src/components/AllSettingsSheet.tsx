@@ -17,13 +17,11 @@ const AllSettingsSheet = ({
 	project,
 	setProject,
 	registry,
-	onRegistryChange,
 	onClose,
 }: {
 	project: Project;
 	setProject: (updater: (previous: Project) => Project) => void;
 	registry: FontRegistry;
-	onRegistryChange: (registry: FontRegistry) => void;
 	onClose: () => void;
 }) => (
 	<Sheet title="All settings" onClose={onClose}>
@@ -33,12 +31,7 @@ const AllSettingsSheet = ({
 				design either way.
 			</Hint>
 		</div>
-		<OptionsPanel
-			project={project}
-			setProject={setProject}
-			registry={registry}
-			onRegistryChange={onRegistryChange}
-		/>
+		<OptionsPanel project={project} setProject={setProject} registry={registry} />
 	</Sheet>
 );
 

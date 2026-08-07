@@ -27,16 +27,15 @@ describe("toolpathSignature", () => {
 		["text content", (p) => ({ ...p, text: { ...p.text, content: "OTHER" } })],
 		["text position", (p) => ({ ...p, text: { ...p.text, x: 5 } })],
 		["text size", (p) => ({ ...p, text: { ...p.text, size: 40 } })],
-		["strategy", (p) => ({ ...p, text: { ...p.text, strategy: "pocket" } })],
+		["strategy", (p) => ({ ...p, text: { ...p.text, strategy: "outline" } })],
 		["endmill diameter", (p) => ({ ...p, tool: { ...p.tool, endmillDiameter: 6 } })],
 		["feedrate", (p) => ({ ...p, tool: { ...p.tool, feedrate: 2000 } })],
-		["v-bit angle", (p) => ({ ...p, tool: { ...p.tool, vBitAngle: 90 } })],
 		["tab position", (p) => ({ ...p, tabs: { ...p.tabs, positions: [0.1, 0.6] } })],
 		["tab count", (p) => ({ ...p, tabs: { ...p.tabs, positions: evenTabPositions(6) } })],
 		["tab height", (p) => ({ ...p, tabs: { ...p.tabs, height: 5 } })],
 		["tabs disabled", (p) => ({ ...p, tabs: { ...p.tabs, enabled: false } })],
 		["units", (p) => ({ ...p, units: "in" })],
-		["work origin", (p) => ({ ...p, origin: "lower-left" })],
+		["work origin", (p) => ({ ...p, origin: "center" })],
 	];
 
 	for (const [label, mutate] of changes) {

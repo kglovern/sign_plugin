@@ -42,17 +42,6 @@ export const BIT_PRESETS: BitPreset[] = [
 	{ label: '1/4"', diameter: MM_PER_INCH / 4 },
 ];
 
-export const VBIT_DIAMETER_PRESETS: BitPreset[] = [
-	{ label: '1/4"', diameter: MM_PER_INCH / 4 },
-	{ label: '1/2"', diameter: MM_PER_INCH / 2 },
-];
-
-export const VBIT_ANGLE_PRESETS: { label: string; angle: number }[] = [
-	{ label: "30°", angle: 30 },
-	{ label: "60°", angle: 60 },
-	{ label: "90°", angle: 90 },
-];
-
 /**
  * How close a stored diameter must be to a preset to count as that preset.
  * Loose enough to absorb the float noise of an inch round-trip through the

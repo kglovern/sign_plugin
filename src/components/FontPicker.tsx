@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { facesForFamily, type FontRegistry } from "../lib/fonts";
+import { facesForFamily, type FontRegistry, isUpright } from "../lib/fonts";
 
 import { inputClass } from "./Fields";
 
@@ -44,8 +44,7 @@ const FontPicker = ({ registry, selectedKey, onSelect }: Props) => {
 	const chooseFamily = (nextFamily: string) => {
 		const faces = facesForFamily(registry, nextFamily);
 		if (faces.length === 0) return;
-		const upright = faces.find((f) => /^(regular|book|normal)$/i.test(f.style));
-		onSelect((upright ?? faces[0]).key);
+		onSelect((faces.find(isUpright) ?? faces[0]).key);
 		setQuery(nextFamily);
 		setOpen(false);
 	};

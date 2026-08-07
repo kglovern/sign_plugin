@@ -108,6 +108,50 @@ export const facesForFamily = (
 		.filter((f) => f.family === family)
 		.sort((a, b) => a.style.localeCompare(b.style));
 
+const normalStyle = (face: FontFace): string => face.style.trim().toLowerCase();
+
+/** The names foundries give the plain upright face, including giving it none. */
+const UPRIGHT = /^(regular|book|normal|plain|roman)?$/;
+
+/** True for the face a family should open on, rather than Bold Italic. */
+export const isUpright = (face: FontFace): boolean => UPRIGHT.test(normalStyle(face));
+
+export type WeightLabel = "Regular" | "Bold" | "Italic";
+
+export type WeightChoice = { label: WeightLabel; face: FontFace };
+
+/**
+ * The three weights people actually ask for, and nothing else.
+ *
+ * A Windows install reports whatever the foundry shipped — Semilight, Demibold,
+ * Black, Condensed Bold Italic — and offering all of it turns the wizard's
+ * weight row into a wrapping wall of names most users do not want. The extra
+ * faces are still reachable from the full style list in All settings.
+ *
+ * Returned in Regular, Bold, Italic order rather than the alphabetical order
+ * `facesForFamily` uses, which would otherwise lead with Bold Italic.
+ */
+const WEIGHT_STYLES: { label: WeightLabel; test: (style: string) => boolean }[] = [
+	{ label: "Regular", test: (s) => UPRIGHT.test(s) },
+	{ label: "Bold", test: (s) => s === "bold" },
+	{ label: "Italic", test: (s) => s === "italic" || s === "oblique" },
+];
+
+export const weightChoicesForFamily = (
+	registry: FontRegistry,
+	family: string,
+): WeightChoice[] => {
+	const faces = facesForFamily(registry, family);
+	const choices: WeightChoice[] = [];
+
+	for (const { label, test } of WEIGHT_STYLES) {
+		const face = faces.find((f) => test(normalStyle(f)));
+		if (face) choices.push({ label, face });
+	}
+
+	return choices;
+};
+
 /**
  * Parses a face on demand and caches it. Deliberately lazy: a Windows install
  * can carry several hundred faces and parsing them all up front would stall the
@@ -142,8 +186,6 @@ export const pickDefaultFace = (registry: FontRegistry): FontFace | undefined =>
 		"DejaVu Sans",
 		"Liberation Sans",
 	];
-	const isUpright = (f: FontFace) => /^(regular|book|normal)$/i.test(f.style);
-
 	for (const family of preferredFamilies) {
 		const matches = registry.faces.filter(
 			(f) => f.family.toLowerCase() === family.toLowerCase(),

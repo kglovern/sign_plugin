@@ -263,9 +263,9 @@ const OptionsPanel = ({ project, setProject, registry }: Props) => {
 					value={project.text.strategy}
 					onChange={(strategy) => patchText({ strategy })}
 					options={[
+						{ value: "engrave", label: "Engrave centreline" },
 						{ value: "pocket", label: "Pocket (clear inside)" },
 						{ value: "outline", label: "Outline profile" },
-						{ value: "engrave", label: "Engrave centreline" },
 					]}
 				/>
 				{project.text.strategy === "outline" ? (
@@ -446,16 +446,9 @@ const OptionsPanel = ({ project, setProject, registry }: Props) => {
 						step={lengthStep}
 						value={project.gridSpacing}
 						min={0.1}
+						title="How far apart the design grid lines are drawn. Nothing snaps to them."
 						onChange={(gridSpacing) => patch("gridSpacing", gridSpacing)}
 					/>
-					<div className="pt-5">
-						<CheckField
-							label="Snap to grid"
-							checked={project.snapToGrid}
-							title="Hold Alt while dragging to bypass."
-							onChange={(snapToGrid) => patch("snapToGrid", snapToGrid)}
-						/>
-					</div>
 				</Row>
 			</Section>
 		</div>

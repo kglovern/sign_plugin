@@ -51,10 +51,10 @@ export type GenerateResult = {
  * on screen no longer matches the parameters: compare the signature captured at
  * generation time against the current one.
  *
- * Deliberately excludes `gridSpacing` and `snapToGrid`: those change how the
- * design canvas is drawn and nothing about the cut, so adjusting the grid must
- * not invalidate a perfectly good toolpath. `fontKey` is included because
- * swapping the font changes every glyph outline.
+ * Deliberately excludes `gridSpacing`: it changes how the design canvas is drawn
+ * and nothing about the cut, so adjusting the grid must not invalidate a
+ * perfectly good toolpath. `fontKey` is included because swapping the font
+ * changes every glyph outline.
  *
  * The object is built as a literal so key order — and therefore the string — is
  * stable across calls.

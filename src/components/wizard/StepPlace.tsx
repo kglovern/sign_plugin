@@ -46,19 +46,11 @@ const StepPlace = ({
 	const { units, text, tabs, blank } = project;
 	const steps = unitSteps(units);
 
-	const patch = <K extends keyof Project>(key: K, value: Project[K]) =>
-		setProject((p) => ({ ...p, [key]: value }));
 	const patchTabs = (next: Partial<Project["tabs"]>) =>
 		setProject((p) => ({ ...p, tabs: { ...p.tabs, ...next } }));
 
-	/**
-	 * One tap moves by one grid square when snapping is on — anything else and
-	 * the text would land between the lines it is being snapped to.
-	 */
-	const nudgeBy =
-		project.snapToGrid && project.gridSpacing > 0
-			? project.gridSpacing
-			: steps.length * steps.scale;
+	/** One tap moves by one step of the display units — 0.5mm, or 0.01in. */
+	const nudgeBy = steps.length * steps.scale;
 
 	const nudge = (dx: number, dy: number) =>
 		onMoveText(text.x + dx * nudgeBy, text.y + dy * nudgeBy);
@@ -78,7 +70,7 @@ const StepPlace = ({
 			<Card title="Move the lettering">
 				<Hint>
 					Drag the letters straight on the sign, or nudge them with the arrows.
-					Each tap moves them by one grid square.
+					Each tap moves them a small step.
 				</Hint>
 
 				<div className="grid grid-cols-3 justify-items-center gap-2 self-center">
@@ -142,22 +134,6 @@ const StepPlace = ({
 				</div>
 			</Card>
 
-			<Card title="Grid">
-				<BigToggle
-					label="Snap to the grid"
-					hint="Hold Alt while dragging to ignore it."
-					checked={project.snapToGrid}
-					onChange={(snapToGrid) => patch("snapToGrid", snapToGrid)}
-				/>
-				<LengthStepper
-					label="Grid square"
-					units={units}
-					value={project.gridSpacing}
-					min={0.1}
-					onChange={(gridSpacing) => patch("gridSpacing", gridSpacing)}
-				/>
-			</Card>
-
 			<Card
 				title="Holding tabs"
 				hint="Small bridges of wood that stop the sign coming loose and getting thrown before the cut finishes."
@@ -215,8 +191,8 @@ const StepPlace = ({
 					</>
 				) : (
 					<Hint>
-						Tabs only apply when the sign is being cut out. Turn that on back in
-						the Shape step if you want them.
+						Tabs only apply when the sign is being cut out. Turn that back on
+						under All settings if you want them.
 					</Hint>
 				)}
 			</Card>

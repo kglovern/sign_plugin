@@ -11,7 +11,12 @@
 import type { Font } from "opentype.js";
 import { useState } from "react";
 
-import { facesForFamily, type FontRegistry } from "../../lib/fonts";
+import {
+	facesForFamily,
+	type FontRegistry,
+	isUpright,
+	weightChoicesForFamily,
+} from "../../lib/fonts";
 import { boundsSize } from "../../lib/geometry";
 import type { SignGeometry } from "../../lib/generate";
 import { BIT_PRESETS, fitTextSize, matchBitPreset } from "../../lib/presets";
@@ -23,6 +28,7 @@ import type {
 } from "../../lib/project";
 import {
 	Card,
+	type Chip,
 	ChoiceGrid,
 	Chips,
 	FieldLabel,
@@ -68,7 +74,20 @@ const StepText = ({
 
 	const selectedFace = registry.faces.find((f) => f.key === text.fontKey);
 	const family = selectedFace?.family;
-	const styles = family ? facesForFamily(registry, family) : [];
+	const weights = family ? weightChoicesForFamily(registry, family) : [];
+
+	/**
+	 * Whatever is selected must have a chip, or the row shows nothing chosen. A
+	 * face outside the three weights can still be reached from All settings, and
+	 * gets a chip of its own under the name the font itself uses.
+	 */
+	const weightChips: Chip<string>[] = weights.map(({ label, face }) => ({
+		value: face.key,
+		label,
+	}));
+	if (selectedFace && !weights.some(({ face }) => face.key === selectedFace.key)) {
+		weightChips.push({ value: selectedFace.key, label: selectedFace.style });
+	}
 
 	/**
 	 * Picking a family picks a face: the plain upright weight if there is one, so
@@ -78,8 +97,9 @@ const StepText = ({
 	const chooseFamily = (nextFamily: string) => {
 		const faces = facesForFamily(registry, nextFamily);
 		if (faces.length === 0) return;
-		const upright = faces.find((f) => /^(regular|book|normal)$/i.test(f.style));
-		patchText({ fontKey: (upright ?? faces[0]).key });
+		const choices = weightChoicesForFamily(registry, nextFamily);
+		const fallback = choices[0]?.face ?? faces[0];
+		patchText({ fontKey: (faces.find(isUpright) ?? fallback).key });
 	};
 
 	const matchedBit = matchBitPreset(tool.endmillDiameter);
@@ -147,16 +167,13 @@ const StepText = ({
 					) : null}
 				</div>
 
-				{styles.length > 1 ? (
+				{weightChips.length > 1 ? (
 					<div className="flex flex-col gap-1">
 						<FieldLabel>Weight</FieldLabel>
 						<Chips<string>
 							value={text.fontKey}
 							onChange={(fontKey) => patchText({ fontKey })}
-							options={styles.map((face) => ({
-								value: face.key,
-								label: face.style,
-							}))}
+							options={weightChips}
 						/>
 					</div>
 				) : null}
@@ -202,6 +219,11 @@ const StepText = ({
 					onChange={(strategy) => patchText({ strategy })}
 					options={[
 						{
+							value: "engrave",
+							label: "Engrave",
+							hint: "A single line down the middle of each stroke. Fastest.",
+						},
+						{
 							value: "pocket",
 							label: "Pocket",
 							hint: "Flat-bottomed letters, cleared right out. Slowest, boldest.",
@@ -210,11 +232,6 @@ const StepText = ({
 							value: "outline",
 							label: "Outline",
 							hint: "Traces around each letter without clearing the middle.",
-						},
-						{
-							value: "engrave",
-							label: "Engrave",
-							hint: "A single line down the middle of each stroke. Fastest.",
 						},
 					]}
 				/>

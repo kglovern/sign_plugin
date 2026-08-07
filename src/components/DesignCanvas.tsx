@@ -113,17 +113,13 @@ const DesignCanvas = ({
 		return { x: view.x, y: -view.y };
 	};
 
-	const snapToGrid = (value: number, disable: boolean) => {
-		if (disable || !project.snapToGrid || project.gridSpacing <= 0) return value;
-		return Math.round(value / project.gridSpacing) * project.gridSpacing;
-	};
-
 	const tabContour = geometry.tabContour;
 	const tabPerimeter = tabContour ? perimeter(tabContour) : 0;
 
 	/**
 	 * Projects a pointer position onto the profile, then applies the magnetic
-	 * pull toward even spacing. Alt bypasses the magnet, matching the text drag.
+	 * pull toward even spacing. Alt bypasses the magnet, for placing a tab
+	 * somewhere the even spacing would otherwise pull it away from.
 	 */
 	const fractionAt = (
 		clientX: number,
@@ -167,10 +163,9 @@ const DesignCanvas = ({
 		const design = toDesign(e.clientX, e.clientY);
 		if (!design) return;
 
-		const free = e.altKey;
 		onMoveText(
-			snapToGrid(drag.textX + (design.x - drag.originX), free),
-			snapToGrid(drag.textY + (design.y - drag.originY), free),
+			drag.textX + (design.x - drag.originX),
+			drag.textY + (design.y - drag.originY),
 		);
 	};
 

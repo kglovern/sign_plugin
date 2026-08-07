@@ -1,11 +1,15 @@
 /**
  * Step 1 — the blank: what shape the sign is and how big the board is.
  *
+ * Two cards, and thickness sits with width and height because they are the same
+ * question asked three times: how big is the board in front of you.
+ *
  * Profile depth is deliberately absent. The old panel asked for stock thickness
  * and profile depth separately, then explained in a tooltip that the second
  * should be a little more than the first; here the thickness stepper sets both.
  * Step 4 and All settings still expose depth on its own for anyone who wants
- * to break that link.
+ * to break that link. All settings likewise keeps the switch for *not* cutting
+ * the sign out — nearly every sign wants it, so the wizard just does it.
  */
 
 import { contoursToPathData } from "../../lib/geometry";
@@ -17,7 +21,7 @@ import {
 } from "../../lib/presets";
 import type { BlankShape, Project } from "../../lib/project";
 import { blankContour } from "../../lib/shapes";
-import { BigToggle, Card, ChoiceGrid, Chips } from "../touch/Touch";
+import { Card, ChoiceGrid, Chips } from "../touch/Touch";
 import { LengthStepper } from "./Controls";
 
 /**
@@ -139,9 +143,6 @@ const StepShape = ({
 					min={0}
 					onChange={(height) => patchBlank({ height })}
 				/>
-			</Card>
-
-			<Card title="Your board">
 				<LengthStepper
 					label="Board thickness"
 					units={units}
@@ -155,16 +156,6 @@ const StepShape = ({
 						})
 					}
 					hint="How thick is the board you're cutting?"
-				/>
-				<BigToggle
-					label="Cut the sign out of the board"
-					hint={
-						blank.cutProfile
-							? "The machine will cut around the outline when it's done."
-							: "Only the letters will be cut — for a board already cut to shape."
-					}
-					checked={blank.cutProfile}
-					onChange={(cutProfile) => patchBlank({ cutProfile })}
 				/>
 			</Card>
 		</>

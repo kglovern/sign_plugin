@@ -51,12 +51,10 @@ describe("toolpathSignature", () => {
 	});
 
 	it("ignores canvas-only settings", () => {
-		// Grid spacing and snapping change how the design surface is drawn and
-		// nothing about the cut, so adjusting them must not invalidate a
-		// perfectly good toolpath.
+		// Grid spacing changes how the design surface is drawn and nothing about
+		// the cut, so adjusting it must not invalidate a perfectly good toolpath.
 		const base = sig(defaultProject());
 		expect(sigAfter((p) => ({ ...p, gridSpacing: 25 }))).toBe(base);
-		expect(sigAfter((p) => ({ ...p, snapToGrid: false }))).toBe(base);
 	});
 });
 

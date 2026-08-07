@@ -101,9 +101,11 @@ export type Project = {
 	text: TextSpec;
 	tool: Tool;
 	tabs: Tabs;
-	/** Design canvas grid spacing / drag snap, in mm. */
+	/**
+	 * Design canvas grid spacing, in mm. Display only — the grid is a size
+	 * reference to drag against, and nothing snaps to it.
+	 */
 	gridSpacing: number;
-	snapToGrid: boolean;
 };
 
 export const MM_PER_INCH = 25.4;
@@ -154,5 +156,4 @@ export const defaultProject = (): Project => ({
 		length: 8,
 	},
 	gridSpacing: 10,
-	snapToGrid: true,
 });

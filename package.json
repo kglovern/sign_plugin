@@ -7,12 +7,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "clean": "rm -rf ui",
     "preview": "vite preview",
     "check": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "@sienci/gsender-plugin-sdk": "^0.1.0",
+    "@sienci/gsender-plugin-sdk": "^0.2.1",
     "@sienci/gviewer": "^0.1.28",
     "clipper-lib": "^6.4.2",
     "opentype.js": "^2.0.0",

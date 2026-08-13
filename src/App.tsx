@@ -1,4 +1,4 @@
-import { gsender } from "@sienci/gsender-plugin-sdk";
+import { gcode } from "@sienci/gsender-plugin-sdk";
 import { useWorkspaceState } from "@sienci/gsender-plugin-sdk/react";
 import type { Font } from "opentype.js";
 import {
@@ -320,7 +320,7 @@ const App = () => {
 				return;
 			}
 
-			await gsender.gcode.loadToVisualizer(fresh.gcode, filename);
+			await gcode.loadToVisualizer(fresh.gcode, filename);
 			setStatus(
 				isStandalone()
 					? `Standalone harness — downloaded ${filename}.`

@@ -13,5 +13,21 @@
 			}
 		]
 	},
-	"permissions": ["machine:read"]
+	"permissions": [
+		"workspace:read",
+		"visualizer:load"
+	],
+	"capabilities": {
+		"requestTypes": [
+			"workspace:get:state",
+			"gcode:load:to:visualizer"
+		],
+		"topics": [
+			"workspace"
+		],
+		"allowedFunctions": [
+			"useWorkspaceState",
+			"gcode"
+		]
+	}
 }

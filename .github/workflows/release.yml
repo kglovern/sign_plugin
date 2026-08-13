@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -50,7 +52,22 @@ jobs:
           cp -r ui "$STAGE/"
           (cd "$STAGE" && zip -r "$GITHUB_WORKSPACE/simple-signs-${VERSION}.zip" .)
 
+      - name: Generate release notes
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          PREV_TAG="$(git tag --sort=-creatordate | grep -v "^${TAG}$" | head -n 1)"
+          {
+            echo "## Changes"
+            if [ -n "$PREV_TAG" ]; then
+              git log --pretty=format:'- %s' "${PREV_TAG}..${TAG}"
+            else
+              git log --pretty=format:'- %s' "${TAG}"
+            fi
+          } > release-notes.md
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           files: simple-signs-*.zip
+          body_path: release-notes.md

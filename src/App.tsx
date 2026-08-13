@@ -219,7 +219,7 @@ const App = () => {
 				// this the button just appears frozen for the duration.
 				await new Promise((resolve) => requestAnimationFrame(resolve));
 
-				const next = generate(project, font);
+				const next = await generate(project, font);
 				setOutput({ result: next, signature });
 				return next;
 			} finally {

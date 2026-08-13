@@ -12,7 +12,7 @@
 
 import type { GenerateResult } from "../../lib/generate";
 import type { OriginMode, Project } from "../../lib/project";
-import { Card, Chips, Hint, TouchButton } from "../touch/Touch";
+import { Card, Chips, Hint, Spinner, TouchButton } from "../touch/Touch";
 import { formatLength } from "./Controls";
 
 const STRATEGY_NAMES: Record<Project["text"]["strategy"], string> = {
@@ -76,7 +76,10 @@ const StepCarve = ({
 
 			<Card title="The cut">
 				{busy ? (
-					<Hint>Working out the toolpath…</Hint>
+					<div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+						<Spinner size="sm" />
+						<Hint>Working out the toolpath…</Hint>
+					</div>
 				) : result === null ? (
 					<TouchButton variant="secondary" onClick={onGenerate}>
 						Work out the toolpath

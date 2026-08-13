@@ -108,13 +108,13 @@ export const buildGeometry = (
 	};
 };
 
-export const generate = (
+export const generate = async (
 	project: Project,
 	font: Font | null,
-): GenerateResult => {
+): Promise<GenerateResult> => {
 	const geometry = buildGeometry(project, font);
 
-	const textPath = textToolpath(geometry.glyphs, project.text, project.tool);
+	const textPath = await textToolpath(geometry.glyphs, project.text, project.tool);
 	const profilePath = blankProfileToolpath(
 		project.blank,
 		project.tool,

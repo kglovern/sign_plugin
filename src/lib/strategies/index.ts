@@ -10,11 +10,11 @@ export { blankProfileToolpath } from "./blank";
 export { pocketRings } from "./pocket";
 
 /** Dispatches to the strategy selected in the project model. */
-export const textToolpath = (
+export const textToolpath = async (
 	glyphs: Contour[],
 	text: TextSpec,
 	tool: Tool,
-): Toolpath => {
+): Promise<Toolpath> => {
 	switch (text.strategy) {
 		case "pocket":
 			return pocketToolpath(glyphs, text, tool);

@@ -34,6 +34,25 @@ const SELECTED =
 const UNSELECTED =
 	"border-gray-300 hover:border-blue-400 dark:border-gray-700 dark:hover:border-blue-500";
 
+// --- Loading -------------------------------------------------------------------
+
+/** A spinning ring that inherits its color from surrounding text. */
+export const Spinner = ({
+	size = "md",
+	className = "",
+}: {
+	size?: "sm" | "md";
+	className?: string;
+}) => (
+	<span
+		role="status"
+		aria-label="Loading"
+		className={`inline-block shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent ${
+			size === "sm" ? "h-4 w-4" : "h-8 w-8"
+		} ${className}`}
+	/>
+);
+
 // --- Text --------------------------------------------------------------------
 
 /** Plain-English explanation under a control. This is where the guidance lives. */

@@ -41,8 +41,8 @@ describe("depthSteps", () => {
 });
 
 describe("pocketRings", () => {
-	it("steps inward by the stepover and stops when the shape is consumed", () => {
-		const rings = pocketRings(glyph, 6, 0.5);
+	it("steps inward by the stepover and stops when the shape is consumed", async () => {
+		const rings = await pocketRings(glyph, 6, 0.5);
 		expect(rings.length).toBeGreaterThan(1);
 
 		for (let i = 1; i < rings.length; i += 1) {
@@ -53,12 +53,12 @@ describe("pocketRings", () => {
 		}
 	});
 
-	it("starts one tool radius inside the outline", () => {
-		const rings = pocketRings(glyph, 6, 0.5);
+	it("starts one tool radius inside the outline", async () => {
+		const rings = await pocketRings(glyph, 6, 0.5);
 		expect(boundsOf(rings[0]).maxX).toBeCloseTo(20 - 3, 1);
 	});
 
-	it("produces nothing when the cutter does not fit", () => {
+	it("produces nothing when the cutter does not fit", async () => {
 		const narrow: Contour[] = [
 			[
 				{ x: -10, y: -0.5 },
@@ -67,36 +67,36 @@ describe("pocketRings", () => {
 				{ x: -10, y: 0.5 },
 			],
 		];
-		expect(pocketRings(narrow, 6, 0.5)).toEqual([]);
+		expect(await pocketRings(narrow, 6, 0.5)).toEqual([]);
 	});
 });
 
 describe("textToolpath", () => {
-	it("compensates outward so an 'outside' letter keeps its size", () => {
+	it("compensates outward so an 'outside' letter keeps its size", async () => {
 		const spec: TextSpec = { ...text, strategy: "outline", outlineSide: "outside" };
-		const { passes } = textToolpath(glyph, spec, tool);
+		const { passes } = await textToolpath(glyph, spec, tool);
 
 		const xs = passes.flatMap((p) => p.moves.map((m) => m.x));
 		expect(Math.max(...xs)).toBeCloseTo(20 + tool.endmillDiameter / 2, 1);
 	});
 
-	it("compensates inward for an 'inside' letter", () => {
+	it("compensates inward for an 'inside' letter", async () => {
 		const spec: TextSpec = { ...text, strategy: "outline", outlineSide: "inside" };
-		const { passes } = textToolpath(glyph, spec, tool);
+		const { passes } = await textToolpath(glyph, spec, tool);
 
 		const xs = passes.flatMap((p) => p.moves.map((m) => m.x));
 		expect(Math.max(...xs)).toBeCloseTo(20 - tool.endmillDiameter / 2, 1);
 	});
 
-	it("leaves the outline untouched when cutting on the line", () => {
+	it("leaves the outline untouched when cutting on the line", async () => {
 		const spec: TextSpec = { ...text, strategy: "engrave" };
-		const { passes } = textToolpath(glyph, spec, tool);
+		const { passes } = await textToolpath(glyph, spec, tool);
 
 		const xs = passes.flatMap((p) => p.moves.map((m) => m.x));
 		expect(Math.max(...xs)).toBeCloseTo(20, 6);
 	});
 
-	it("warns instead of silently emitting nothing when the cutter cannot fit", () => {
+	it("warns instead of silently emitting nothing when the cutter cannot fit", async () => {
 		// Real text at real sizes hits this: Arial stems at 22mm are about 2mm
 		// wide, so a 1/8" endmill cannot pocket them. Emitting an empty program
 		// with no explanation would look like the plugin was broken.
@@ -108,22 +108,22 @@ describe("textToolpath", () => {
 				{ x: -10, y: 0.5 },
 			],
 		];
-		const result = textToolpath(narrow, { ...text, strategy: "pocket" }, tool);
+		const result = await textToolpath(narrow, { ...text, strategy: "pocket" }, tool);
 
 		expect(result.passes).toHaveLength(0);
 		expect(result.warnings.join(" ")).toMatch(/does not fit/i);
 	});
 
-	it("pockets successfully once the cutter fits", () => {
-		const result = textToolpath(glyph, { ...text, strategy: "pocket" }, tool);
+	it("pockets successfully once the cutter fits", async () => {
+		const result = await textToolpath(glyph, { ...text, strategy: "pocket" }, tool);
 		expect(result.passes.length).toBeGreaterThan(0);
 		expect(result.warnings).toHaveLength(0);
 	});
 
-	it("never exceeds the requested text depth, whichever strategy", () => {
+	it("never exceeds the requested text depth, whichever strategy", async () => {
 		for (const strategy of ["pocket", "outline", "engrave"] as const) {
 			const spec: TextSpec = { ...text, strategy, depth: 4 };
-			const { passes } = textToolpath(glyph, spec, tool);
+			const { passes } = await textToolpath(glyph, spec, tool);
 			const zs = passes.flatMap((p) => p.moves.map((m) => m.z));
 			if (zs.length === 0) continue;
 			expect(Math.min(...zs)).toBeGreaterThanOrEqual(-4 - 1e-6);

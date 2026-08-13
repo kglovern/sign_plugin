@@ -15,12 +15,27 @@ import { contourToPass, depthSteps, EMPTY_TOOLPATH, type Pass, type Toolpath } f
 /** Stop runaway loops if a degenerate stepover slips through. */
 const MAX_RINGS = 500;
 
+/**
+ * Hands control back to the browser so a paint (the busy spinner) can land
+ * mid-computation — without this the ring loop below blocks the main thread
+ * solid for its entire duration. Falls back to a macrotask where
+ * `requestAnimationFrame` doesn't exist (the vitest/node test environment).
+ */
+const yieldToPaint = () =>
+	new Promise<void>((resolve) => {
+		if (typeof requestAnimationFrame === "function") {
+			requestAnimationFrame(() => resolve());
+		} else {
+			setTimeout(resolve, 0);
+		}
+	});
+
 /** Concentric rings clearing `region`, outermost first. */
-export const pocketRings = (
+export const pocketRings = async (
 	region: Contour[],
 	toolDiameter: number,
 	stepover: number,
-): Contour[][] => {
+): Promise<Contour[][]> => {
 	const radius = toolDiameter / 2;
 	const step = Math.max(toolDiameter * stepover, 1e-3);
 
@@ -29,18 +44,19 @@ export const pocketRings = (
 		const ring = offsetContours(region, -(radius + step * i));
 		if (ring.length === 0) break;
 		rings.push(ring);
+		if (i % 8 === 7) await yieldToPaint();
 	}
 	return rings;
 };
 
-export const pocketToolpath = (
+export const pocketToolpath = async (
 	glyphs: Contour[],
 	text: TextSpec,
 	tool: Tool,
-): Toolpath => {
+): Promise<Toolpath> => {
 	if (glyphs.length === 0 || text.depth <= 0) return EMPTY_TOOLPATH;
 
-	const rings = pocketRings(glyphs, tool.endmillDiameter, tool.stepover);
+	const rings = await pocketRings(glyphs, tool.endmillDiameter, tool.stepover);
 	if (rings.length === 0) {
 		return {
 			...EMPTY_TOOLPATH,

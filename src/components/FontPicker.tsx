@@ -108,7 +108,7 @@ const FontPicker = ({ registry, selectedKey, onSelect }: Props) => {
 					className={inputClass}
 				/>
 				{open && filtered.length > 0 ? (
-					<div className="absolute top-full z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+					<div className="absolute top-full z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-700 dark:bg-slate-700">
 						{filtered.map((f, i) => (
 							<button
 								key={f}

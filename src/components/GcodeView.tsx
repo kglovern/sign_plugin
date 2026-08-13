@@ -73,7 +73,7 @@ const GcodeView = ({ gcode, onCopy, onSave }: Props) => {
 					Save .nc
 				</button>
 			</div>
-			<pre className="min-h-0 grow overflow-auto rounded-lg bg-gray-100 p-3 font-mono text-[11px] leading-relaxed dark:bg-gray-900">
+			<pre className="min-h-0 grow overflow-auto rounded-lg bg-gray-100 p-3 font-mono text-[11px] leading-relaxed dark:bg-slate-800">
 				{gcode}
 			</pre>
 		</div>

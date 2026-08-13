@@ -23,7 +23,7 @@ import {
 import { LengthStepper, unitSteps } from "./Controls";
 
 const PAD_BUTTON =
-	"h-16 w-16 cursor-pointer rounded-xl border-2 border-gray-300 text-2xl leading-none select-none hover:border-blue-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:border-gray-700";
+	"h-16 w-16 cursor-pointer rounded-xl border-2 border-gray-300 text-2xl leading-none select-none hover:border-blue-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-gray-700";
 
 const ALIGN_TARGETS: { target: AlignTarget; label: string }[] = [
 	{ target: "top", label: "Top" },
@@ -96,7 +96,7 @@ const StepPlace = ({
 						type="button"
 						aria-label="Centre the lettering"
 						onClick={() => align("centre")}
-						className="h-16 w-16 cursor-pointer rounded-xl border-2 border-blue-600 text-sm font-medium text-blue-700 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:text-blue-300 dark:hover:bg-blue-950"
+						className="h-16 w-16 cursor-pointer rounded-xl border-2 border-blue-500 text-sm font-medium text-blue-700 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:text-blue-300 dark:hover:bg-blue-950"
 					>
 						Centre
 					</button>

@@ -27,12 +27,12 @@ export const ACTION = "min-h-14 text-base font-medium";
 /** 80px — choice cards, which carry a label and a line of explanation. */
 export const CARD = "min-h-20";
 
-const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
+const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500";
 
 const SELECTED =
-	"border-blue-600 bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100";
+	"border-blue-500 bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100";
 const UNSELECTED =
-	"border-gray-300 hover:border-blue-400 dark:border-gray-700 dark:hover:border-blue-600";
+	"border-gray-300 hover:border-blue-400 dark:border-gray-700 dark:hover:border-blue-500";
 
 // --- Text --------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ export const Card = ({
 	const isOpen = collapsible ? open : true;
 
 	return (
-		<section className="mb-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+		<section className="mb-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-slate-800">
 			{collapsible ? (
 				<button
 					type="button"
@@ -102,9 +102,9 @@ type ButtonVariant = "primary" | "secondary" | "quiet";
 
 const VARIANTS: Record<ButtonVariant, string> = {
 	primary:
-		"border-blue-600 bg-blue-600 text-white hover:bg-blue-700 hover:border-blue-700",
+		"border-blue-500 bg-blue-500 text-white hover:bg-blue-700 hover:border-blue-700",
 	secondary:
-		"border-blue-600 text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950",
+		"border-blue-500 text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950",
 	quiet:
 		"border-gray-300 text-gray-700 hover:border-blue-400 dark:border-gray-700 dark:text-gray-300",
 };
@@ -298,7 +298,7 @@ export const BigToggle = ({
 		<span
 			aria-hidden
 			className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-				checked ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
+				checked ? "bg-blue-500" : "bg-gray-300 dark:bg-slate-500"
 			}`}
 		>
 			<span
@@ -341,7 +341,7 @@ export const Sheet = ({
 			role="dialog"
 			aria-modal="true"
 			aria-label={title}
-			className="fixed inset-0 z-50 flex flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100"
+			className="fixed inset-0 z-50 flex flex-col bg-white text-gray-900 dark:bg-slate-900 dark:text-gray-100"
 		>
 			<header className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-200 px-4 py-2 dark:border-gray-800">
 				<h2 className="m-0 truncate text-lg font-semibold">{title}</h2>
@@ -512,7 +512,7 @@ export const Stepper = ({
 					onKeyDown={(e) => {
 						if (e.key === "Enter") e.currentTarget.blur();
 					}}
-					className={`${FOCUS} h-14 w-full rounded-xl border-2 border-gray-300 bg-white text-center text-lg tabular-nums disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100`}
+					className={`${FOCUS} h-14 w-full rounded-xl border-2 border-gray-300 bg-white text-center text-lg tabular-nums disabled:opacity-40 dark:border-gray-700 dark:bg-slate-700 dark:text-gray-100`}
 				/>
 				<button
 					type="button"

@@ -7,7 +7,7 @@ import { type ReactNode, useEffect, useState } from "react";
  */
 export const inputClass =
 	"w-full min-h-12 rounded-md border border-gray-300 bg-white px-3 py-2 text-base " +
-	"dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
+	"dark:border-gray-700 dark:bg-slate-700 dark:text-gray-100";
 
 export const Section = ({
 	title,

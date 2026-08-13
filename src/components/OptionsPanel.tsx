@@ -425,7 +425,7 @@ const OptionsPanel = ({ project, setProject, registry }: Props) => {
 								})
 							}
 							disabled={project.tabs.positions.length === 0}
-							className="mb-3 min-h-12 w-full cursor-pointer rounded-md border border-gray-300 px-3 text-sm hover:border-blue-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700"
+							className="mb-3 min-h-12 w-full cursor-pointer rounded-md border border-gray-300 px-3 text-sm hover:border-blue-500 hover:text-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700"
 						>
 							Distribute evenly
 						</button>

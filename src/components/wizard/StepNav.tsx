@@ -51,9 +51,9 @@ const StepNav = ({
 								type="button"
 								aria-current={active ? "step" : undefined}
 								onClick={() => onSelect(step.key)}
-								className={`flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 px-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
+								className={`flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 px-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
 									active
-										? "border-blue-600 bg-blue-600 text-white"
+										? "border-blue-500 bg-blue-500 text-white"
 										: "border-transparent text-gray-600 hover:border-blue-300 dark:text-gray-300"
 								}`}
 							>
@@ -64,7 +64,7 @@ const StepNav = ({
 											? "bg-white text-blue-700"
 											: done
 												? "bg-emerald-500 text-white"
-												: "bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+												: "bg-gray-200 text-gray-600 dark:bg-slate-600 dark:text-gray-300"
 									}`}
 								>
 									{done ? "✓" : index + 1}
@@ -80,7 +80,7 @@ const StepNav = ({
 				type="button"
 				onClick={onOpenAllSettings}
 				title="Open every setting at once"
-				className="flex min-h-12 shrink-0 cursor-pointer items-center gap-2 rounded-xl border-2 border-gray-300 px-3 text-gray-600 hover:border-blue-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:border-gray-700 dark:text-gray-300"
+				className="flex min-h-12 shrink-0 cursor-pointer items-center gap-2 rounded-xl border-2 border-gray-300 px-3 text-gray-600 hover:border-blue-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-gray-700 dark:text-gray-300"
 			>
 				<span aria-hidden>⚙</span>
 				<span className="hidden text-base sm:inline">All settings</span>

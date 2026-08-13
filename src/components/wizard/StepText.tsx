@@ -131,7 +131,7 @@ const StepText = ({
 						rows={3}
 						onChange={(e) => patchText({ content: e.target.value })}
 						placeholder="Type what the sign should say"
-						className="min-h-24 w-full resize-y rounded-xl border-2 border-gray-300 bg-white p-3 text-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+						className="min-h-24 w-full resize-y rounded-xl border-2 border-gray-300 bg-white p-3 text-lg dark:border-gray-700 dark:bg-slate-700 dark:text-gray-100"
 					/>
 				</label>
 				<Hint>Press Enter for a second line.</Hint>
@@ -147,7 +147,7 @@ const StepText = ({
 					<select
 						value={family ?? ""}
 						onChange={(e) => chooseFamily(e.target.value)}
-						className="min-h-14 w-full rounded-xl border-2 border-gray-300 bg-white px-4 text-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+						className="min-h-14 w-full rounded-xl border-2 border-gray-300 bg-white px-4 text-lg dark:border-gray-700 dark:bg-slate-700 dark:text-gray-100"
 					>
 						{family ? null : (
 							<option value="">

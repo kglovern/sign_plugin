@@ -452,7 +452,7 @@ const App = () => {
 								}}
 								className={`min-h-12 cursor-pointer border-b-2 px-4 text-base ${
 									tab === key
-										? "border-blue-600 font-medium text-blue-600"
+										? "border-blue-500 font-medium text-blue-500"
 										: "border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
 								}`}
 							>
@@ -463,7 +463,7 @@ const App = () => {
 
 					<div className="min-h-0 grow">
 						<div
-							className={`h-full rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950 ${
+							className={`h-full rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-slate-900 ${
 								tab === "design" ? "" : "hidden"
 							}`}
 						>

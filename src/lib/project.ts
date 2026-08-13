@@ -24,8 +24,6 @@ export type Blank = {
 	/** Bounding width in mm. For an ellipse this is the full major/minor axis. */
 	width: number;
 	height: number;
-	/** Corner radius in mm; only used by `rounded-rect`. */
-	cornerRadius: number;
 	/** How deep the profile cut goes. Usually stock thickness plus a little. */
 	depth: number;
 	stockThickness: number;
@@ -121,7 +119,6 @@ export const defaultProject = (): Project => ({
 		shape: "rounded-rect",
 		width: 150,
 		height: 60,
-		cornerRadius: 8,
 		depth: 19,
 		stockThickness: 18,
 		cutProfile: true,

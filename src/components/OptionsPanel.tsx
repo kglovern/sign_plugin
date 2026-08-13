@@ -147,17 +147,6 @@ const OptionsPanel = ({ project, setProject, registry }: Props) => {
 						onChange={(height) => patchBlank({ height })}
 					/>
 				</Row>
-				{project.blank.shape === "rounded-rect" ? (
-					<Length
-						label="Corner radius"
-						units={units}
-						scale={scale}
-						step={lengthStep}
-						value={project.blank.cornerRadius}
-						min={0}
-						onChange={(cornerRadius) => patchBlank({ cornerRadius })}
-					/>
-				) : null}
 				<Row>
 					<Length
 						label="Stock thickness"

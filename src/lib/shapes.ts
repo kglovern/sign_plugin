@@ -53,16 +53,15 @@ const rectangle = (width: number, height: number): Contour => {
 	];
 };
 
-const roundedRect = (
-	width: number,
-	height: number,
-	cornerRadius: number,
-): Contour => {
+/** Fixed corner radius, mm — no longer user-configurable. */
+const CORNER_RADIUS_MM = 8;
+
+const roundedRect = (width: number, height: number): Contour => {
 	const hw = width / 2;
 	const hh = height / 2;
-	// A radius over half the short side is geometrically impossible; clamp
-	// rather than reject so dragging the slider never breaks the preview.
-	const r = Math.max(0, Math.min(cornerRadius, Math.min(hw, hh)));
+	// A radius over half the short side is geometrically impossible on a small
+	// blank; clamp rather than reject so a tiny blank never breaks the preview.
+	const r = Math.max(0, Math.min(CORNER_RADIUS_MM, Math.min(hw, hh)));
 	if (r === 0) return rectangle(width, height);
 
 	const quarter = Math.PI / 2;
@@ -184,7 +183,7 @@ export const blankContour = (blank: Blank): Contour => {
 		case "rectangle":
 			return rectangle(width, height);
 		case "rounded-rect":
-			return roundedRect(width, height, blank.cornerRadius);
+			return roundedRect(width, height);
 		case "ellipse":
 			return ellipse(width, height);
 		case "boat":

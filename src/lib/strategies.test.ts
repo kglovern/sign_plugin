@@ -245,17 +245,17 @@ describe("blankContour", () => {
 		}
 	});
 
-	it("clamps a corner radius larger than the blank can hold", () => {
+	it("clamps the corner radius on a blank too small to hold it", () => {
+		// The fixed 8mm radius exceeds the half-height of a 40x10 blank (5mm).
 		const contour = blankContour({
 			...baseProject.blank,
 			shape: "rounded-rect",
 			width: 40,
-			height: 20,
-			cornerRadius: 999,
+			height: 10,
 		});
 		const bounds = boundsOf([contour]);
 
 		expect(bounds.maxX - bounds.minX).toBeCloseTo(40, 1);
-		expect(bounds.maxY - bounds.minY).toBeCloseTo(20, 1);
+		expect(bounds.maxY - bounds.minY).toBeCloseTo(10, 1);
 	});
 });

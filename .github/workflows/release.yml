@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync version to tag
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          VERSION="${VERSION#v}"
+          node -e "
+            const fs = require('fs');
+            for (const file of ['package.json', 'gsender-plugin.json']) {
+              const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+              data.version = process.env.VERSION;
+              fs.writeFileSync(file, JSON.stringify(data, null, '\t') + '\n');
+            }
+          "
+
+      - name: Build
+        run: npm run build
+
+      - name: Package plugin zip
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          STAGE="$(mktemp -d)/simple-signs"
+          mkdir -p "$STAGE"
+          cp package.json gsender-plugin.json "$STAGE/"
+          cp -r ui "$STAGE/"
+          (cd "$STAGE" && zip -r "$GITHUB_WORKSPACE/simple-signs-${VERSION}.zip" .)
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: simple-signs-*.zip

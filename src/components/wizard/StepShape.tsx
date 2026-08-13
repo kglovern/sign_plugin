@@ -37,7 +37,6 @@ const iconPath = (shape: BlankShape): string =>
 		blankContour({
 			shape,
 			...ICON_BOX,
-			cornerRadius: 5,
 			depth: 0,
 			stockThickness: 0,
 			cutProfile: false,
@@ -107,16 +106,6 @@ const StepShape = ({
 						},
 					]}
 				/>
-				{blank.shape === "rounded-rect" ? (
-					<LengthStepper
-						label="Corner rounding"
-						units={units}
-						value={blank.cornerRadius}
-						min={0}
-						onChange={(cornerRadius) => patchBlank({ cornerRadius })}
-						hint="How round the four corners are."
-					/>
-				) : null}
 			</Card>
 
 			<Card title="Size" hint="Pick a common size, or set your own below.">

@@ -15,7 +15,8 @@
 	},
 	"permissions": [
 		"workspace:read",
-		"visualizer:load"
+		"visualizer:load",
+		"local-fonts"
 	],
 	"capabilities": {
 		"requestTypes": [
